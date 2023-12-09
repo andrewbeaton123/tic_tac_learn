@@ -89,7 +89,7 @@ class MonteCarloAgent:
             return np.argmax(action_values)  # Greedy action
 
     def train(self, episodes):
-        for episode in tqdm(range(episodes)):
+        for episode in tqdm(range(episodes),colour="green"):
             trajectory = []  # List to store the trajectory (state, action, reward)
 
             env = TicTacToe()
@@ -125,7 +125,7 @@ class MonteCarloAgent:
 
 if __name__ == "__main__":
     agent = MonteCarloAgent()
-    episodes = 10000
+    episodes = 250000
     
     # Initialize Q-values for all possible state-action pairs
     # Generate all possible initial game states
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # Example: Let the agent play against a random opponent for evaluation.
     wins = 0
     draws= 0
-    for _ in range(1000):
+    for _ in range(10000):
         env = TicTacToe()
         while not env.is_game_over():
             if env.current_player == 1:
@@ -167,5 +167,5 @@ if __name__ == "__main__":
         elif env.check_winner() ==0:
             draws +=1
 
-    print(f"Agent won {wins} out of 10000 games.")
+    print(f"Agent won {wins} out of 100000 games.")
     print(f"Games drawn {draws}")

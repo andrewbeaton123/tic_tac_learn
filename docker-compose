@@ -1,0 +1,8 @@
+version: 3.8
+  
+services :
+  tic_tac_learn:
+    image:
+    environment:
+      - PYTHONUNBUFFERED=0
+  

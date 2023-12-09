@@ -1,5 +1,6 @@
 import numpy as np
-
+from tqdm import tqdm
+import random
 class MonteCarloAgent:
     def __init__(self, epsilon=0.1):
         self.q_values = {}  # Dictionary to store state-action values
@@ -17,29 +18,77 @@ class MonteCarloAgent:
         if np.random.rand() < self.epsilon:
             return np.random.choice(len(self.q_values[state_str]))  # Random action
         else:
-            return np.argmax(self.q_values[state_str])  # Greedy action
+            try:
+                return np.argmax(self.q_values[state_str])  # Greedy action
+            except Exception:
+                return np.random.choice(len(self.q_values[state_str])) 
 
     def train(self, episodes, env):
-        for episode in range(episodes):
+        for episode in tqdm(range(episodes), colour="green"):
             trajectory = []  # List to store the trajectory (state, action, reward)
 
-            state = env
-            done = False
+            # Randomly determine the first player
+            first_player = random.randint(0, 1)
 
-            while not done:
-                action = self.epsilon_greedy_policy(state)
-                next_state, reward, done = env.step(action)
-                trajectory.append((state, action, reward))
-                state = next_state
+            if first_player == 1:
+                env = TicTacToe()
+                state = env
+                done = False
 
-            # Update Q-values using the returns from the episode
-            returns = 0
-            for t in reversed(range(len(trajectory))):
-                state, action, reward = trajectory[t]
-                state_str = str(state.board.flatten())
-                returns = reward + returns
-                self.returns[(state_str, action)] = self.returns.get((state_str, action), 0) + 1
-                self.q_values[state_str][action] += (returns - self.q_values[state_str][action]) / self.returns[(state_str, action)]
+                while not done:
+                    if state.current_player == 1:
+                        action = self.epsilon_greedy_policy(env)
+                        action = env.get_valid_moves()[action]
+                        board_state, reward, done = env.step(action)
+
+                    else:
+                        action = random.choice(len(state.get_valid_moves()))
+                        action = env.get_valid_moves()[action]
+                        board_state, reward, done = env.step(action)
+
+                    trajectory.append((env, action_index, reward))
+
+            else:
+                # The second player goes first in this case
+                # Randomly determine which player to play as
+                player = random.randint(0, 1)
+
+                if player == 1:
+                    # Agent plays as 1st player
+                    env = TicTacToe()
+                    state = env
+                    done = False
+
+                    while not done:
+                        if state.current_player == 1:
+                            action = self.epsilon_greedy_policy(env)
+                            action = env.get_valid_moves()[action]
+                            board_state, reward, done = env.step(action)
+
+                        else:
+                            action = random.choice(len(state.get_valid_moves()))
+                            action = env.get_valid_moves()[action]
+                            board_state, reward, done = env.step(action)
+
+                        trajectory.append((env, action_index, reward))
+
+                else:
+                    # Agent plays as second player
+                    env = TicTacToe()
+                    state = env
+                    done = False
+
+                    while not done:
+                        action = random.choice(len(state.get_valid_moves()))
+                        action = env.get_valid_moves()[action]
+                        board_state, reward, done = env.step(action)
+
+                        if state.current_player == 1:
+                            action = self.epsilon_greedy_policy(env)
+                            action = env.get_valid_moves()[action]
+                            board_state, reward, done = env.step(action)
+
+                        trajectory.append((env, action_index, reward))
 
 class TicTacToe:
     def __init__(self):
@@ -110,9 +159,13 @@ if __name__ == "__main__":
                 initial_state.current_player = player
                 all_possible_states.append(initial_state)
 
+    
     # Initialize Q-values for all possible states
     agent.initialize_q_values(all_possible_states)
 
+    print(agent.q_values)
+    exit()
+    
     # Train the agent using the Monte Carlo method
     episodes = 10000
     env = TicTacToe()
@@ -132,4 +185,4 @@ if __name__ == "__main__":
         if env.check_winner() == 1:
             wins += 1
 
-    print(f"Agent won {wins} out of 1000 games.")
+    print(f"Agent won {wins} out of {episodes} games.")
