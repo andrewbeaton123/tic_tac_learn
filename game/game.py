@@ -1,9 +1,11 @@
 import numpy as np
+import random 
+
 
 class TicTacToe:
     def __init__(self):
         self.board = np.zeros((3, 3))  # 3x3 Tic Tac Toe board
-        self.current_player = 1  # Player 1 starts
+        self.current_player = random.choice([0,1])  # Player 1 starts
 
     def reset(self):
         self.board = np.zeros((3, 3))
@@ -58,9 +60,10 @@ class TicTacToe:
 
 # Example usage:
 if __name__ == "__main__":
-    env = TicTacToe()
+    
     winner_log = {"0":0, "1":0,"2":0}
     for  x in range((10000)):
+        env = TicTacToe()
         while not env.is_game_over():
             env.print_board()
             valid_moves = env.get_valid_moves()
@@ -69,10 +72,10 @@ if __name__ == "__main__":
             env.make_move(row, col)
 
         winner = env.check_winner()
-        if winner == 0:
-            print("It's a draw!")
-        else:
-            print(f"Player {winner} wins!")
+        #if winner == 0:
+        #    print("It's a draw!")
+        #else:
+        #    print(f"Player {winner} wins!")
         
         winner_log[str(winner)] +=1
         env.reset()

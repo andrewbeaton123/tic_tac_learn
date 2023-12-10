@@ -93,7 +93,7 @@ class MonteCarloAgent:
 class TicTacToe:
     def __init__(self):
         self.board = np.zeros((3, 3), dtype=int)  # 3x3 Tic Tac Toe board
-        self.current_player = 1  # Player 1 starts
+        self.current_player = random.choice([0,1])  # Player 1 starts
         self.winner = None
 
     def reset(self):
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     print(agent.q_values)
     exit()
-    
+
     # Train the agent using the Monte Carlo method
     episodes = 10000
     env = TicTacToe()

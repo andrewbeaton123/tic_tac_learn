@@ -5,6 +5,9 @@ import  pickle as pkl
 logging.basicConfig(level="INFO")
 import random
 import pickle as pkl
+from joblib import Parallel, delayed
+import ray
+from ray import tune
 # Monte Carlo Control Agent
 
 class TicTacToe:
@@ -67,11 +70,11 @@ class TicTacToe:
 
 
 class MonteCarloAgent:
-    def __init__(self):
+    def __init__(self,episodes:int):
         self.q_values = {}  # Dictionary to store state-action values
         self.returns = {}    # Dictionary to store returns for each state-action pair
         self.epsilon = 0.1  # Epsilon for epsilon-greedy policy
-
+        self.train(episodes)
     def initialize_q_values(self, all_possible_states):
         for state in all_possible_states:
             state_str = str(state.board.flatten())
@@ -126,7 +129,7 @@ class MonteCarloAgent:
 
 if __name__ == "__main__":
     agent = MonteCarloAgent()
-    episodes = 1000000
+    episodes = 10000
     
     # Initialize Q-values for all possible state-action pairs
     # Generate all possible initial game states
@@ -144,9 +147,17 @@ if __name__ == "__main__":
     logging.info(agent.q_values.keys())
 
     logging.info(len(agent.q_values))
+    cores= 4
+    with Parallel(n_jobs=cores) as pool:
+        futures = []
+        future = pool.apply_async(MonteCarloAgent(int(episodes/cores)) )
+        futures.append(future)
 
-
-    agent.train(episodes)
+        # Wait for all jobs to finish
+        for future in futures:
+            future.get()
+        
+    agent.train(episodes,4)
     with open("1million_game_tic_tac_toe_mntcarlo.pkl", "wb") as f:
         pkl.dump(agent,f)
     #with open('MC_agent_1.pickle', 'wb') as handle:
