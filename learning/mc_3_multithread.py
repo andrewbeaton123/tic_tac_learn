@@ -2,12 +2,11 @@ import numpy as np
 import logging 
 from tqdm import tqdm
 import  pickle as pkl
-logging.basicConfig(level="INFO")
+logging.basicConfig(level="DEBUG")
 import random
 import pickle as pkl
 from joblib import Parallel, delayed
-import ray
-from ray import tune
+
 # Monte Carlo Control Agent
 
 class TicTacToe:
@@ -128,7 +127,7 @@ class MonteCarloAgent:
                 self.q_values[state_str][action] += (returns - self.q_values[state_str][action]) / self.returns[(state_str, action)]
 
 if __name__ == "__main__":
-    agent = MonteCarloAgent()
+    #agent = MonteCarloAgent()
     episodes = 10000
     
     # Initialize Q-values for all possible state-action pairs
@@ -144,9 +143,7 @@ if __name__ == "__main__":
     
     # # Initialize Q-values for all possible states
     # agent.initialize_q_values(all_possible_states)
-    logging.info(agent.q_values.keys())
-
-    logging.info(len(agent.q_values))
+    
     cores= 4
     with Parallel(n_jobs=cores) as pool:
         futures = []
