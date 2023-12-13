@@ -1,15 +1,9 @@
 import numpy as np
-import logging 
-from tqdm import tqdm
-import  pickle
-import random
-
-from joblib import Parallel, delayed, parallel_backend, wrap_non_picklable_objects
-logging.basicConfig(level="INFO")
-
+from joblib import Parallel, delayed
 from threading import Lock
 from itertools import product
-# Monte Carlo Control Agent
+import random 
+from tqdm import tqdm
 
 class TicTacToe:
     def __init__(self,starting_player:int, board =None):
@@ -66,18 +60,12 @@ class TicTacToe:
                     return
 
 
-# Monte Carlo Control Agent
-
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
         self.epsilon = epsilon
         self.q_values = {}
         self.returns = {}
         self.all_possible_states = all_possible_states
-        self.lock = Lock()# Use threading.Lock instead of multiprocessing.Lock
-
-    def __reduce__(self):
-        return (self.__class__, (self.epsilon, self.all_possible_states))
 
     def initialize_q_values(self):
         for state in self.all_possible_states:
@@ -92,75 +80,42 @@ class MonteCarloAgent:
         action_values = self.q_values.get(state_str, np.zeros(len(state.get_valid_moves())))
         return np.argmax(action_values)
 
-    def train_episode(self, episodes):
+    def train_episode(self, env):
         episode_data = []
         episode_returns = []
-        for _ in range(episodes):
-            env = TicTacToe(random.choice([1, 2]))
 
-            while not env.is_game_over():
-                if env.current_player == 1:
-                    action = self.epsilon_greedy_policy(env)
-                else:
-                    action = np.random.choice(len(env.get_valid_moves()))
-                env.make_move(*env.get_valid_moves()[action])
+        while not env.is_game_over():
+            if env.current_player == 1:
+                action = self.epsilon_greedy_policy(env)
+            else:
+                action = np.random.choice(len(env.get_valid_moves()))
+            env.make_move(*env.get_valid_moves()[action])
 
-            state_str = tuple(env.board.flatten())
+        state_str = tuple(env.board.flatten())
+        episode_data.append((state_str, self.q_values[state_str]))
 
-            with self.lock:
-                episode_data.append((state_str, self.q_values[state_str]))
-
-            for state_str, q_values in episode_data:
-                for action, value in enumerate(q_values):
-                    with self.lock:
-                        self.q_values[state_str][action] = sum(
-                            episode_returns[i]
-                            for i in range(len(episode_returns))
-                            if state_str == episode_data[i][0]
-                            and episode_data[i][1][action] == value
-                        )
+        for state_str, q_values in episode_data:
+            for action, value in enumerate(q_values):
+                self.q_values[state_str][action] = sum(
+                    episode_returns[i]
+                    for i in range(len(episode_returns))
+                    if state_str == episode_data[i][0]
+                    and episode_data[i][1][action] == value
+                )
 
         return self.q_values, self.returns
 
-
     def train(self, episodes, cores):
-        
-        
+        Parallel(n_jobs=cores)(
+            delayed(self.train_episode)(TicTacToe(random.choice([1, 2])))
+            for _ in range(episodes)
+        )
 
-        # Create a list of futures to store the results of the parallel training processes
-        futures = []
-        with parallel_backend("loky", n_jobs=cores):
-             with Parallel() as pool:
-                delayed_train_episode = delayed(self.train_episode)
-
-                # Make the instance method picklable
-                delayed_train_episode = wrap_non_picklable_objects(delayed_train_episode)
-
-                # Use the map function to execute the train_episode in parallel
-                futures.extend(pool(delayed_train_episode(episodes // cores, cores, self.lock) for _ in range(cores)))
-        # Get the results of the parallel training
-        for future in futures:
-            q_values, returns = future
-
-            # Lock the dictionaries before updating them
-            self.lock.acquire()
-
-            # Update the q_values dictionary
-            for state_str, state_q_values in q_values.items():
-                self.q_values[state_str] = state_q_values
-
-            # Update the returns dictionary
-            for state_str, state_returns in returns.items():
-                self.returns[state_str] = state_returns
-
-            # Unlock the dictionaries
-            self.lock.release()
-        # After all the worker processes have finished training their episodes
-        # Print the agent's win rate and draws from 10,000 games against a random opponent
+        # Test your training logic...
         wins = 0
         draws = 0
         for _ in range(10000):
-            env = TicTacToe(random.choice([1,2]))
+            env = TicTacToe(random.choice([1, 2]))
             while not env.is_game_over():
                 if env.current_player == 1:
                     action = self.epsilon_greedy_policy(env)
@@ -172,40 +127,24 @@ class MonteCarloAgent:
                 wins += 1
             elif env.winner == 0:
                 draws += 1
-
+    
         print(f"Agent won {wins} out of 10,000 games.")
         print(f"Draws: {draws}")
 
-    def save(self,filename:str):
-        # Ask the user for the filename
-        filename = filename
-
-        # Save the class to the file using pickle
-        with open(filename, 'wb') as f:
-            pickle.dump(self, f)
-
-    def load(filename):
-        # Load the class from the file using pickle
-        with open(filename, 'rb') as f:
-            loaded_agent = pickle.load(f)
-def generate_all_states():
-    states = []
-    for player_marks in product([0, 1, 2], repeat=9):  # 0 represents an empty cell
-        board = np.array(player_marks).reshape((3, 3))
-        tic_tac_toe_instance = TicTacToe(1,board)
-        states.append(tic_tac_toe_instance)
-    return states
-
 if __name__ == "__main__":
-    episodes = 10000
+    episodes = 10
     cores = 4
     epsilon = 0.1
 
     # Initialize Q-values for all possible state-action pairs
+    def generate_all_states():
+        states = []
+        for player_marks in tqdm(product([0, 1, 2], repeat=9)):  # 0 represents an empty cell
+            board = np.array(player_marks).reshape((3, 3))
+            tic_tac_toe_instance = TicTacToe(1,board)
+            states.append(tic_tac_toe_instance)
+        return states
     all_possible_states = generate_all_states()
-
     rl_model = MonteCarloAgent(epsilon, all_possible_states)
     rl_model.initialize_q_values()
-
-    rl_model.train(episodes,cores)
-    rl_model.save(f"rl_mc_tic_tac_toe_model_{episodes}_{cores}.pkl")
+    rl_model.train(episodes, cores)
