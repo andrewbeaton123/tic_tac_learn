@@ -73,7 +73,11 @@ class MonteCarloAgent:
         self.epsilon = epsilon
         self.q_values = {}
         self.returns = {}
-        self.all_possible_states= all_possible_states
+        self.all_possible_states = all_possible_states
+        self.lock = Lock()# Use threading.Lock instead of multiprocessing.Lock
+
+    def __reduce__(self):
+        return (self.__class__, (self.epsilon, self.all_possible_states))
 
     def initialize_q_values(self):
         for state in self.all_possible_states:
@@ -88,16 +92,12 @@ class MonteCarloAgent:
         action_values = self.q_values.get(state_str, np.zeros(len(state.get_valid_moves())))
         return np.argmax(action_values)
 
-
-    def train_episode(self, episodes, cores, lock):
-    # Create a list to store the state-Q-value pairs and returns for each episode
+    def train_episode(self, episodes):
         episode_data = []
-        episode_returns = [] 
-        for _ in tqdm(range(episodes)):
-            # Initialize the state
+        episode_returns = []
+        for _ in range(episodes):
             env = TicTacToe(random.choice([1, 2]))
-            state_str =None
-            # Play the game until it is over
+
             while not env.is_game_over():
                 if env.current_player == 1:
                     action = self.epsilon_greedy_policy(env)
@@ -105,53 +105,45 @@ class MonteCarloAgent:
                     action = np.random.choice(len(env.get_valid_moves()))
                 env.make_move(*env.get_valid_moves()[action])
 
-            # Update the Q-values and returns for the episode
             state_str = tuple(env.board.flatten())
-            logging.debug(f"monte_carlo_Aget- Train_episode- before saving q value game state is..." )
-            logging.debug(env.board)
-            #logging.debug(env.board.flatten())
-            #logging.debug(env.print_board())
-            #logging.debug(self.q_values.keys())
 
-            #try:
-            episode_data.append((state_str, (self.q_values[state_str])))
-            #except  Exception:
-            #    episode_data.append((state_str, np.zeros(len(env.get_valid_moves()))))
+            with self.lock:
+                episode_data.append((state_str, self.q_values[state_str]))
 
-            # Update the Q-values dictionary
             for state_str, q_values in episode_data:
                 for action, value in enumerate(q_values):
-                    self.q_values[state_str][action] = sum(
-                        episode_returns[i]
-                        for i in range(len(episode_returns))
-                        if state_str == episode_data[i][0]
-                        and episode_data[i][1][action] == value
-                    )
+                    with self.lock:
+                        self.q_values[state_str][action] = sum(
+                            episode_returns[i]
+                            for i in range(len(episode_returns))
+                            if state_str == episode_data[i][0]
+                            and episode_data[i][1][action] == value
+                        )
 
-        # Return the updated Q-values and returns dictionaries
         return self.q_values, self.returns
 
+
     def train(self, episodes, cores):
-        # Create a lock to synchronize access to the q_values and returns dictionaries
-        lock = Lock()
+        
+        
 
         # Create a list of futures to store the results of the parallel training processes
         futures = []
+        with parallel_backend("loky", n_jobs=cores):
+             with Parallel() as pool:
+                delayed_train_episode = delayed(self.train_episode)
 
-        with Parallel(n_jobs=cores, backend='threading') as pool:
-            delayed_train_episode = delayed(self.train_episode)
+                # Make the instance method picklable
+                delayed_train_episode = wrap_non_picklable_objects(delayed_train_episode)
 
-            # Make the instance method picklable
-            delayed_train_episode = wrap_non_picklable_objects(delayed_train_episode)
-
-            # Use the map function to execute the train_episode in parallel
-            futures.extend(pool(delayed_train_episode(episodes // cores, cores, lock) for _ in range(cores)))
+                # Use the map function to execute the train_episode in parallel
+                futures.extend(pool(delayed_train_episode(episodes // cores, cores, self.lock) for _ in range(cores)))
         # Get the results of the parallel training
         for future in futures:
             q_values, returns = future
 
             # Lock the dictionaries before updating them
-            lock.acquire()
+            self.lock.acquire()
 
             # Update the q_values dictionary
             for state_str, state_q_values in q_values.items():
@@ -162,7 +154,7 @@ class MonteCarloAgent:
                 self.returns[state_str] = state_returns
 
             # Unlock the dictionaries
-            lock.release()
+            self.lock.release()
         # After all the worker processes have finished training their episodes
         # Print the agent's win rate and draws from 10,000 games against a random opponent
         wins = 0
@@ -205,8 +197,8 @@ def generate_all_states():
     return states
 
 if __name__ == "__main__":
-    episodes = 1000000
-    cores = 1
+    episodes = 10000
+    cores = 4
     epsilon = 0.1
 
     # Initialize Q-values for all possible state-action pairs
