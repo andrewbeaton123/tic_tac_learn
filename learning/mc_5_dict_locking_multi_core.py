@@ -83,7 +83,7 @@ class MonteCarloAgent:
     def train_episode(self, env):
         episode_data = []
         episode_returns = []
-
+        
         while not env.is_game_over():
             if env.current_player == 1:
                 action = self.epsilon_greedy_policy(env)
@@ -132,7 +132,7 @@ class MonteCarloAgent:
         print(f"Draws: {draws}")
 
 if __name__ == "__main__":
-    episodes = 10
+    episodes = 10000
     cores = 4
     epsilon = 0.1
 
@@ -144,6 +144,8 @@ if __name__ == "__main__":
             tic_tac_toe_instance = TicTacToe(1,board)
             states.append(tic_tac_toe_instance)
         return states
+    
+
     all_possible_states = generate_all_states()
     rl_model = MonteCarloAgent(epsilon, all_possible_states)
     rl_model.initialize_q_values()
