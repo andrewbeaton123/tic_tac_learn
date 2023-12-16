@@ -134,38 +134,43 @@ def main():
         combined_q_values = {}
         cores= 3
         last_e_total = 0
-        for episodes in range(100000,1000000,100000):
+        for episodes in range(100000,1000000,50000):#range(100000,1000000,100000):
             logging.debug(f"main - Starting {episodes}")
-            core_episodes =   int(episodes/cores)
-            new_episodes  = core_episodes - last_e_total
-            configs = [(new_episodes, all_possible_states) for _ in range(cores)]
+            
+            new_episodes  = episodes - last_e_total
+            core_episodes =   int(new_episodes/cores)
+            configs = [(core_episodes, all_possible_states) for _ in range(cores)]
             logging.debug("main - Finished generating configs ")
             #runs = create_run_mc(10)
             logging.debug(f"main - cofig length is : {len(configs)}")
             logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
-            with Pool(cores) as pool: 
-                logging.debug("main - within pool")
-                results = pool.imap_unordered(mc_create_run_instance,configs)
-                logging.debug("main - finished pool ")
-                logging.debug(type(results))
-                logging.debug(results._index)
-
+            if [e_s[0] for e_s in configs] != [0,0,0]:
                 start = time.process_time()
-                for runs, q_values in results:
-                    print("")
-                print(f"Episodes time taken {time.process_time() - start}")
-            # Combine Q-values
-            
-            logging.debug("main- staring q vlaue combination")
-            
-            for episodes, q_values in results:
-                logging.debug(f"main -q length {len((q_values).keys())}")
-                for state_str, values in q_values.items():
-                    if state_str not in combined_q_values:
-                        combined_q_values[state_str] = np.array(values)
-                    else:
-                        combined_q_values[state_str] += np.array(values)
-            logging.debug("main- fished q vlaue combination")
+                with Pool(cores) as pool: 
+                    
+                    logging.debug("main - within pool")
+                    results = pool.imap_unordered(mc_create_run_instance,configs)
+                    logging.debug("main - finished pool ")
+                    logging.debug(type(results))
+                    logging.debug(results._index)
+
+                    
+                    for runs, q_values in results:
+                        print("")
+                    print(f"Episodes time taken {time.process_time() - start}")
+                # Combine Q-values
+                
+                logging.debug("main- staring q vlaue combination")
+                
+                for episodes, q_values in results:
+                    logging.debug(f"main -q length {len((q_values).keys())}")
+                    for state_str, values in q_values.items():
+                        if state_str not in combined_q_values:
+                            combined_q_values[state_str] = np.array(values)
+                        else:
+                            combined_q_values[state_str] += np.array(values)
+                logging.debug("main- fished q vlaue combination")
+                last_e_total +=sum([e_s[0] for e_s in configs])
             agent = SuperCarloAgent(combined_q_values,0.1)
             wins = 0
             draws= 0
@@ -188,7 +193,13 @@ def main():
             print(f"Agent won {wins} out of 100000 games.")
             print(f"Games drawn {draws}")
             overall_res[episodes] = (wins,draws)
-            last_e_total +=episodes
+            
+        with open("latest_overall_results.pkl", "wb") as f :
+            pkl.dump(overall_res,f)
+        
+        with open("Combination_super_carlo.pkl","wb") as f2:
+            pkl.dump(agent, f2)
+
         return overall_res
 
 
