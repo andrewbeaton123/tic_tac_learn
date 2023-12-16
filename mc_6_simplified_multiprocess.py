@@ -10,7 +10,7 @@ from itertools import product
 from typing import Dict
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
-
+import time 
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
         self.epsilon = epsilon
@@ -102,10 +102,12 @@ class SuperCarloAgent(MonteCarloAgent):
 
 
 def    mc_create_run_instance(args):
+        print("mc_create_run_instance - run")
         episodes_in,all_states = args
         agent= MonteCarloAgent(0.1,all_states)
         agent.initialize_q_values()
         agent.train(episodes_in)
+        print("mc_create_run_instance - finish")
         return episodes_in,agent.q_values
 
 def main():
@@ -139,15 +141,21 @@ def main():
             configs = [(new_episodes, all_possible_states) for _ in range(cores)]
             logging.debug("main - Finished generating configs ")
             #runs = create_run_mc(10)
-
+            logging.debug(f"main - cofig length is : {len(configs)}")
             logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
             with Pool(cores) as pool: 
                 logging.debug("main - within pool")
                 results = pool.imap_unordered(mc_create_run_instance,configs)
                 logging.debug("main - finished pool ")
-                #for runs, q_values in results:
-                #    print(f"{runs}")
+                logging.debug(type(results))
+                logging.debug(results._index)
+
+                start = time.process_time()
+                for runs, q_values in results:
+                    print("")
+                print(f"Episodes time taken {time.process_time() - start}")
             # Combine Q-values
+            
             logging.debug("main- staring q vlaue combination")
             
             for episodes, q_values in results:
