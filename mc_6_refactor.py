@@ -1,9 +1,8 @@
 import numpy as np
 import logging 
-import  pickle as pkl
-logging.basicConfig(level="DEBUG")
+import time 
+logging.basicConfig(level="INFO")
 import random
-import logging 
 import pickle as pkl
 # Monte Carlo Control Agent
 from tqdm import tqdm
@@ -11,8 +10,7 @@ from itertools import product
 from typing import Dict
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
-from datetime import datetime
-import gc
+
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
         self.epsilon = epsilon
@@ -102,14 +100,30 @@ class SuperCarloAgent(MonteCarloAgent):
         }
     
 
-def    mc_create_run_instance(args):
-        #print("mc_create_run_instance - run")
-        episodes_in,all_states,lr = args
-        agent= MonteCarloAgent(lr,all_states)
-        agent.initialize_q_values()
-        agent.train(episodes_in)
-        #rint("mc_create_run_instance - finish")
-        return episodes_in,agent.q_values
+#TODO add in the ability to get a random board state in and play the game from there
+# this will balance the training set better
+    
+def    mc_create_run_instance(args) ->(int,Dict):
+    """single run instances of the monte carlo agent training
+    takes the number of episodes to train over 
+    A list of all possible game states and a learning rate
+
+    Args:
+        args (int,list,float): number of episodes, 
+        all states of the board, learning rate
+       
+
+    Returns:
+        Tuple(int,Dict): the number of episodes that were used to train
+        resultant q values 
+    """
+    #print("mc_create_run_instance - run")
+    episodes_in,all_states,lr = args
+    agent= MonteCarloAgent(lr,all_states)
+    agent.initialize_q_values()
+    agent.train(episodes_in)
+    #rint("mc_create_run_instance - finish")
+    return episodes_in,agent.q_values
 def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
     """_summary_
 
@@ -136,6 +150,15 @@ def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
             draws +=1
     return wins,draws 
 
+def multi_process_controller(args):
+    func,configs,cores = args
+    with Pool(cores) as pool:
+        logging.debug("multi process controler thread create")
+        results = pool.imap_unordered(func,configs)
+                       
+        for ret in results:
+            continue
+    return results
 def main():
         def generate_all_states():
             states = []
@@ -171,28 +194,29 @@ def main():
                 new_episodes  = episodes - last_e_total
                 core_episodes =   int(new_episodes/cores)
                 configs = [(core_episodes, all_possible_states,rate) for _ in range(cores)]
-                logging.debug(f"main - Finished generating configs {datetime.now()}")
+                logging.debug("main - Finished generating configs ")
                 #runs = create_run_mc(10)
                 logging.debug(f"main - cofig length is : {len(configs)}")
                 logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
                 if [e_s[0] for e_s in configs] != [0,0,0]:
-                    
-                    with Pool(cores) as pool: 
+                    start = time.process_time()
+                    results = multi_process_controller(mc_create_run_instance,configs,cores)
+                    # with Pool(cores) as pool: 
                         
-                        logging.debug("main - within pool")
-                        results = pool.imap_unordered(mc_create_run_instance,configs)
-                        logging.debug("main - finished pool ")
-                        logging.debug(type(results))
-                        logging.debug(results._index)
+                    #     logging.debug("main - within pool")
+                    #     results = pool.imap_unordered(mc_create_run_instance,configs)
+                    #     logging.debug("main - finished pool ")
+                    #     logging.debug(type(results))
+                    #     logging.debug(results._index)
 
                         
-                        for runs, q_values in results:
-                            continue
+                    #     for runs, q_values in results:
+                    #         continue
                         #print(f"Episodes time taken {time.process_time() - start}")
                     # Combine Q-values
                     
-                    logging.debug(f"main- staring q vlaue combination {datetime.now()}")
-                    logging.debug(f"Combined Q length is {len((combined_q_values).keys())}")
+                    logging.debug("main- staring q vlaue combination")
+                    
                     for episodes, q_values in results:
                         logging.debug(f"main -q length {len((q_values).keys())}")
                         for state_str, values in q_values.items():
@@ -206,15 +230,14 @@ def main():
                 
                 tests_overall = 100000
                 test_count_pc= int(tests_overall/cores)
-                logging.debug(f"main - starting test for combined q's {datetime.now()}")
+                logging.debug("main - starting test for combined q's")
                 test_config = [(test_count_pc,agent_to_test) for _ in range(cores) ]
                 total_wins, total_draws= 0,0
-                with Pool(cores) as pool:
-                    res_test_games= pool.imap_unordered(test_agent,test_config)
-
-                    for wins_run, draw_run in res_test_games:
-                        total_wins += wins_run
-                        total_draws += draw_run
+                res_test_games = multi_process_controller(test_agent,test_config,cores)
+                
+                for wins_run, draw_run in res_test_games:
+                    total_wins += wins_run
+                    total_draws += draw_run
                         #print("")
                 
                 
@@ -224,9 +247,7 @@ def main():
                 print(f"Agent won {total_wins} out of {tests_overall} games.")
                 print(f"Games drawn {total_draws}")
                 overall_res[episodes] = (rate,total_wins,total_draws)
-                del(results)
-                del(agent_to_test)
-                gc.collect()
+                
             with open("latest_overall_results.pkl", "wb") as f :
                 pkl.dump(overall_res,f)
             
