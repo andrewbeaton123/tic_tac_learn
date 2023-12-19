@@ -1,9 +1,10 @@
 import numpy as np
 import logging 
-import time 
+import  os
 logging.basicConfig(level="DEBUG")
 import random
 import pickle as pkl
+import time
 # Monte Carlo Control Agent
 from tqdm import tqdm
 from itertools import product
@@ -11,6 +12,9 @@ from typing import Dict
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
 from datetime import datetime
+from src.file_mangement.directory_creator import create_directory
+
+#TODO move agents into their own files in the src structure
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
         self.epsilon = epsilon
@@ -102,8 +106,9 @@ class SuperCarloAgent(MonteCarloAgent):
 
 #TODO add in the ability to get a random board state in and play the game from there
 # this will balance the training set better
-    
+#TODO move these 3 controller functions to their own files
 def    mc_create_run_instance(args) ->(int,Dict):
+
     """single run instances of the monte carlo agent training
     takes the number of episodes to train over 
     A list of all possible game states and a learning rate
@@ -124,6 +129,7 @@ def    mc_create_run_instance(args) ->(int,Dict):
     agent.train(episodes_in)
     #rint("mc_create_run_instance - finish")
     return episodes_in,agent.q_values
+
 def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
     """_summary_
 
@@ -151,15 +157,15 @@ def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
     return wins,draws 
 
 def multi_process_controller(func,configs,cores:int):
-     
+    res_retun: list = []
     with Pool(cores) as pool:
         logging.debug("multi process controler thread create")
-        results = pool.imap_unordered(func,configs)
-                       
-        for keys,vals in results:
-            continue
-    return results
+                     
+        for  func_return in pool.imap_unordered(func,configs):
+            res_retun.append(func_return)
+    return res_retun
 
+#TODO Move this testing to the correct place in src
 def test_agent_tic_tac_toe(agent:SuperCarloAgent|MonteCarloAgent
                                   ,num_tests:int =10000,
                                   cores:int=4) -> (int,int):
@@ -182,15 +188,16 @@ def test_agent_tic_tac_toe(agent:SuperCarloAgent|MonteCarloAgent
     test_config = [(test_count_pc,agent) for _ in range(cores) ]
     total_wins, total_draws= 0,0
     res_test_games = multi_process_controller(test_agent,test_config,cores)
-    
-    for wins_run, draw_run in res_test_games:
-        logging.info(wins_run,draw_run)
+    for multi_return_single in res_test_games:
+        wins_run, draw_run= multi_return_single
+        #logging.info(wins_run,draw_run)
         total_wins += wins_run
         total_draws += draw_run
     return total_wins,total_draws
 
 
 def main():
+        #TODO move all the states stuff to its correct place in the src structure 
         def generate_all_states():
             states = []
             logging.debug("Geenerate_all_states  is starting ")
@@ -223,62 +230,61 @@ def main():
         combined_q_values = {}
         cores= 8
         last_e_total = 0
-        step = 500
-        test_games = 5000
-        
+        step = 100000
+        total_training_games=2000000
+        test_games = 50000
+        training_rate = []
         learning_rate = [0.1,0.01, 0.001]
         for rate in tqdm(learning_rate, colour="green"):
             
-            for episodes in tqdm(range(1,5000,step)):#range(100000,1000000,100000):
+            for episodes in tqdm(range(1,total_training_games,step)):#range(100000,1000000,100000):
                 
                 logging.debug(f"main - Starting {episodes}")
                 
-                
-                configs = [(step, all_possible_states,rate) for _ in range(cores)]
+                __steps_pc = int(step/cores)
+                configs = [(__steps_pc, all_possible_states,rate) for _ in range(cores)]
                 logging.debug("main - Finished generating configs ")
                 #runs = create_run_mc(10)
                 logging.debug(f"main - cofig length is : {len(configs)}")
                 logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
                 if [e_s[0] for e_s in configs] != [0,0,0]:
-                    results = multi_process_controller(mc_create_run_instance,configs,cores)
-                    # with Pool(cores) as pool: 
-                        
-                    #     logging.debug("main - within pool")
-                    #     results = pool.imap_unordered(mc_create_run_instance,configs)
-                    #     logging.debug("main - finished pool ")
-                    #     logging.debug(type(results))
-                    #     logging.debug(results._index)
-
-                        
-                    #     for runs, q_values in results:
-                    #         continue
-                        #print(f"Episodes time taken {time.process_time() - start}")
-                    # Combine Q-values
-                    
+                    t_before_train = time.time()
+                    multi_core_returns = multi_process_controller(mc_create_run_instance,configs,cores)
+                    t_after_train = time.time()
+                    time_taken_to_train = round(t_after_train-t_before_train)
+                    games_per_sec= round(step/ time_taken_to_train)
+                    training_rate.append(games_per_sec)
+                    logging.debug(f"Trained {step} games over {cores} cores in {time_taken_to_train} seconds")
+                    logging.info(f"Training at {round(step/ time_taken_to_train)} g/s")
+                    logging.debug(f"main - multi core training returned {type(multi_core_returns)}")
+                    logging.debug(f"main - multi core training single returned {type(multi_core_returns[0])}")
                     logging.debug("main- staring q vlaue combination")
-                    
-                    for episodes, q_values in results:
+
+                    for mc_return_single in multi_core_returns:
+                        episodes, q_values = mc_return_single
                         logging.debug(f"main -q length {len((q_values).keys())}")
                         for state_str, values in q_values.items():
                             if state_str not in combined_q_values:
-                                combined_q_values[state_str] = np.array(values)
+                                combined_q_values[state_str] = np.array(values).astype("float64")
                             else:
-                                combined_q_values[state_str] += np.array(values)
-                    logging.debug("main- fished q vlaue combination")
+                                combined_q_values[state_str] += np.array(values).astype("float64")
+                    logging.debug("main- finshed q vlaue combination")
                     last_e_total +=sum([e_s[0] for e_s in configs])
                 agent_to_test = SuperCarloAgent(combined_q_values,0.1)
 
                 total_wins, total_draws = test_agent_tic_tac_toe(agent_to_test,test_games,cores)
-                print(f"For Episodes : {episodes}")
+                print(f"For Episodes :{last_e_total}")
 
                 print(f"Agent won {total_wins} out of {test_games} games.")
                 print(f"Games drawn {total_draws}")
                 overall_res[episodes] = (rate,total_wins,total_draws)
-                
-            with open("latest_overall_results.pkl", "wb") as f :
+            save_time= datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+            dir_save = f".//runs//games-{last_e_total}_learning_rate-{rate}_{save_time}//"
+            create_directory(dir_save)
+            with open(f"{dir_save}//latest_overall_results_{last_e_total}_lr_{rate}.pkl", "wb") as f :
                 pkl.dump(overall_res,f)
             
-            with open("Combination_super_carlo.pkl","wb") as f2:
+            with open(f"{dir_save}//Combination_super_carlo_{last_e_total}_lr_{rate}.pkl","wb") as f2:
                 pkl.dump(agent_to_test, f2)
 
         return overall_res
