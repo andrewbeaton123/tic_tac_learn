@@ -1,7 +1,7 @@
 import numpy as np
 import logging 
 import time 
-logging.basicConfig(level="INFO")
+logging.basicConfig(level="DEBUG")
 import random
 import pickle as pkl
 # Monte Carlo Control Agent
@@ -10,7 +10,7 @@ from itertools import product
 from typing import Dict
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
-
+from datetime import datetime
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
         self.epsilon = epsilon
@@ -150,15 +150,46 @@ def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
             draws +=1
     return wins,draws 
 
-def multi_process_controller(args):
-    func,configs,cores = args
+def multi_process_controller(func,configs,cores:int):
+     
     with Pool(cores) as pool:
         logging.debug("multi process controler thread create")
         results = pool.imap_unordered(func,configs)
                        
-        for ret in results:
+        for keys,vals in results:
             continue
     return results
+
+def test_agent_tic_tac_toe(agent:SuperCarloAgent|MonteCarloAgent
+                                  ,num_tests:int =10000,
+                                  cores:int=4) -> (int,int):
+    """Plays num_tests games of tic tac toe using the monte_carlo
+    agent gready process against a random oponent
+    
+
+    Args:
+
+        agent (_type_, optional): The monte carlo based agent to play vs the 
+        random oponent 
+        num_tests int = The number of games to be played Defaults to 10000, 
+        cores:int=4 = The number of cores to split the games  across
+
+    Returns:
+        Tuple (int, int): total wins by the agent, total draws 
+    """
+    test_count_pc= int(num_tests/cores)
+    logging.debug("testing_agent - starting test for combined q's")
+    test_config = [(test_count_pc,agent) for _ in range(cores) ]
+    total_wins, total_draws= 0,0
+    res_test_games = multi_process_controller(test_agent,test_config,cores)
+    
+    for wins_run, draw_run in res_test_games:
+        logging.info(wins_run,draw_run)
+        total_wins += wins_run
+        total_draws += draw_run
+    return total_wins,total_draws
+
+
 def main():
         def generate_all_states():
             states = []
@@ -171,10 +202,19 @@ def main():
             return states
         
 
-        all_possible_states = generate_all_states()
+        try: 
+            with open("all_possible_states_classess.pkl", "rb") as fl2:
+                all_possible_states = pkl.load(fl2)
+        except Exception:
+            logging.info(f"main - Failed to load all states generating now -{datetime.now()}")
+            all_possible_states = generate_all_states()
+
+            with open("all_possible_states_classess.pkl","wb") as fl :
+                pkl.dump(all_possible_states,fl)
+        logging.info(f"main - length of all states is {len(all_possible_states)}")
         
         
-        logging.debug(f"main - length of all states is {len(all_possible_states)}")
+        
         """  def create_run_mc(runs:int):
             mc_objects =( mc_create_run_instance() for r in range(runs) )
             return mc_objects
@@ -183,23 +223,23 @@ def main():
         combined_q_values = {}
         cores= 8
         last_e_total = 0
+        step = 500
+        test_games = 5000
         
         learning_rate = [0.1,0.01, 0.001]
         for rate in tqdm(learning_rate, colour="green"):
             
-            for episodes in tqdm(range(1,5000000,50000)):#range(100000,1000000,100000):
+            for episodes in tqdm(range(1,5000,step)):#range(100000,1000000,100000):
                 
                 logging.debug(f"main - Starting {episodes}")
                 
-                new_episodes  = episodes - last_e_total
-                core_episodes =   int(new_episodes/cores)
-                configs = [(core_episodes, all_possible_states,rate) for _ in range(cores)]
+                
+                configs = [(step, all_possible_states,rate) for _ in range(cores)]
                 logging.debug("main - Finished generating configs ")
                 #runs = create_run_mc(10)
                 logging.debug(f"main - cofig length is : {len(configs)}")
                 logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
                 if [e_s[0] for e_s in configs] != [0,0,0]:
-                    start = time.process_time()
                     results = multi_process_controller(mc_create_run_instance,configs,cores)
                     # with Pool(cores) as pool: 
                         
@@ -227,24 +267,11 @@ def main():
                     logging.debug("main- fished q vlaue combination")
                     last_e_total +=sum([e_s[0] for e_s in configs])
                 agent_to_test = SuperCarloAgent(combined_q_values,0.1)
-                
-                tests_overall = 100000
-                test_count_pc= int(tests_overall/cores)
-                logging.debug("main - starting test for combined q's")
-                test_config = [(test_count_pc,agent_to_test) for _ in range(cores) ]
-                total_wins, total_draws= 0,0
-                res_test_games = multi_process_controller(test_agent,test_config,cores)
-                
-                for wins_run, draw_run in res_test_games:
-                    total_wins += wins_run
-                    total_draws += draw_run
-                        #print("")
-                
-                
 
+                total_wins, total_draws = test_agent_tic_tac_toe(agent_to_test,test_games,cores)
                 print(f"For Episodes : {episodes}")
 
-                print(f"Agent won {total_wins} out of {tests_overall} games.")
+                print(f"Agent won {total_wins} out of {test_games} games.")
                 print(f"Games drawn {total_draws}")
                 overall_res[episodes] = (rate,total_wins,total_draws)
                 

@@ -148,14 +148,19 @@ def main():
             return states
         
 
-        all_possible_states = generate_all_states()
         
-        
+        try: 
+            with open("all_possible_states_classess.pkl", "rb") as fl2:
+                all_possible_states = pkl.load(fl2)
+        except Exception:
+            logging.info(f"main - Failed to load all states generating now -{datetime.now()}")
+            all_possible_states = generate_all_states()
+
+            with open("all_possible_states_classess.pkl","wb") as fl :
+                pkl.dump(all_possible_states,fl)
+
         logging.debug(f"main - length of all states is {len(all_possible_states)}")
-        """  def create_run_mc(runs:int):
-            mc_objects =( mc_create_run_instance() for r in range(runs) )
-            return mc_objects
-        """
+        
         overall_res = {}
         combined_q_values = {}
         cores= 8
