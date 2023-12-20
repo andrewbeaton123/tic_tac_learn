@@ -79,6 +79,6 @@ if __name__ == "__main__":
         
         winner_log[str(winner)] +=1
         env.reset()
-print(winner_log)
+    print(winner_log)
 
     

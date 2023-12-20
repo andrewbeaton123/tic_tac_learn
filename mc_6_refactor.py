@@ -7,13 +7,13 @@ import pickle as pkl
 import time
 # Monte Carlo Control Agent
 from tqdm import tqdm
-from itertools import product
+
 from typing import Dict
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
 from datetime import datetime
 from src.file_mangement.directory_creator import create_directory
-
+from game.get_all_states import generate_all_states
 #TODO move agents into their own files in the src structure
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
@@ -197,56 +197,41 @@ def test_agent_tic_tac_toe(agent:SuperCarloAgent|MonteCarloAgent
 
 
 def main():
-        #TODO move all the states stuff to its correct place in the src structure 
-        def generate_all_states():
-            states = []
-            logging.debug("Geenerate_all_states  is starting ")
-            for player_marks in product([0, 1, 2], repeat=9):  # 0 represents an empty cell
-                board = np.array(player_marks).reshape((3, 3))
-                tic_tac_toe_instance = TicTacToe(1,board)
-                states.append(tic_tac_toe_instance)
-            logging.debug("Geenerate_all_states  is finishing ")
-            return states
-        
-
-        try: 
-            with open("all_possible_states_classess.pkl", "rb") as fl2:
-                all_possible_states = pkl.load(fl2)
-        except Exception:
-            logging.info(f"main - Failed to load all states generating now -{datetime.now()}")
-            all_possible_states = generate_all_states()
-
-            with open("all_possible_states_classess.pkl","wb") as fl :
-                pkl.dump(all_possible_states,fl)
-        logging.info(f"main - length of all states is {len(all_possible_states)}")
         
         
-        
-        """  def create_run_mc(runs:int):
-            mc_objects =( mc_create_run_instance() for r in range(runs) )
-            return mc_objects
-        """
+        # get a list of all possible board states are tic tac toe game 
+        # instances 
+        all_possible_states = generate_all_states()
+        # create two datastructures that will be used for overall results
         overall_res = {}
         combined_q_values = {}
-        cores= 8
         last_e_total = 0
-        step = 100000
-        total_training_games=2000000
+
+        #~~~~~~~~~~~~~~~~~~~
+        #Overall run settings 
+        #~~~~~~~~~~~~~~~~~~~
+        cores= 8
+        step = 250000
+        total_training_games=1000000
         test_games = 50000
         training_rate = []
         learning_rate = [0.1,0.01, 0.001]
+
         for rate in tqdm(learning_rate, colour="green"):
-            
+            # perform training using a single learning rate 
             for episodes in tqdm(range(1,total_training_games,step)):#range(100000,1000000,100000):
-                
+                # Split overall run numbers into checkpoint models 
+
                 logging.debug(f"main - Starting {episodes}")
                 
+                # steps to be given to each core
                 __steps_pc = int(step/cores)
                 configs = [(__steps_pc, all_possible_states,rate) for _ in range(cores)]
+                #_-__-__-__-__-__-__-__-__-__-__-_
                 logging.debug("main - Finished generating configs ")
-                #runs = create_run_mc(10)
                 logging.debug(f"main - cofig length is : {len(configs)}")
                 logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
+                #_-__-__-__-__-__-__-__-__-__-__-_
                 if [e_s[0] for e_s in configs] != [0,0,0]:
                     t_before_train = time.time()
                     multi_core_returns = multi_process_controller(mc_create_run_instance,configs,cores)
@@ -254,12 +239,14 @@ def main():
                     time_taken_to_train = round(t_after_train-t_before_train)
                     games_per_sec= round(step/ time_taken_to_train)
                     training_rate.append(games_per_sec)
+
+                    #_-__-__-__-__-__-__-__-__-__-__-_                    
                     logging.debug(f"Trained {step} games over {cores} cores in {time_taken_to_train} seconds")
                     logging.info(f"Training at {round(step/ time_taken_to_train)} g/s")
                     logging.debug(f"main - multi core training returned {type(multi_core_returns)}")
                     logging.debug(f"main - multi core training single returned {type(multi_core_returns[0])}")
                     logging.debug("main- staring q vlaue combination")
-
+                    #_-__-__-__-__-__-__-__-__-__-__-_
                     for mc_return_single in multi_core_returns:
                         episodes, q_values = mc_return_single
                         logging.debug(f"main -q length {len((q_values).keys())}")
@@ -268,7 +255,9 @@ def main():
                                 combined_q_values[state_str] = np.array(values).astype("float64")
                             else:
                                 combined_q_values[state_str] += np.array(values).astype("float64")
+                    #_-__-__-__-__-__-__-__-__-__-__-_            
                     logging.debug("main- finshed q vlaue combination")
+                    #_-__-__-__-__-__-__-__-__-__-__-_
                     last_e_total +=sum([e_s[0] for e_s in configs])
                 agent_to_test = SuperCarloAgent(combined_q_values,0.1)
 
