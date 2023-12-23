@@ -9,12 +9,12 @@ import time
 from tqdm import tqdm
 from control.config_class import ConfigClass
 from control.run_variables import RunVariableCreator
-from typing import Dict, NamedTuple
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
 from datetime import datetime
 from src.file_mangement.directory_creator import create_directory
 from game.get_all_states import generate_all_states
+from monte_carlo_learning.combine_q_value_dict import update_q_values
 #TODO move agents into their own files in the src structure
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
@@ -211,9 +211,9 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         
         config = ConfigClass(8,# cores
-                             25000,#steps per run
-                             1000000, # total runs to create a model from
-                             50000,#Increase in games with each model
+                             10000,#steps per run
+                             40000, # total runs to create a model from
+                             10000,#How many games to test with
                              [0.1,0.01,0.001]# learning rates 
                              )
         
@@ -235,7 +235,8 @@ def main():
                            #across all cores 
                            )
         
-
+        #TODO extract this code out and try and  make a base repeatable 
+        
         for rate in tqdm(config.learning_rate, colour="green"):
             # perform training using a single learning rate 
             for episodes in tqdm(range(1,config.total_training_games,config.steps)):#range(100000,1000000,100000):
@@ -273,19 +274,15 @@ def main():
                     logging.debug(f"main - multi core training single returned {type(multi_core_returns[0])}")
                     logging.debug("main- staring q vlaue combination")
                     #_-__-__-__-__-__-__-__-__-__-__-_
+
+                   
                     for mc_return_single in multi_core_returns:
 
                         episodes, q_values = mc_return_single
 
                         logging.debug(f"main -q length {len((q_values).keys())}")
-
-                        for state_str, values in q_values.items():
-                            
-                            if state_str not in run_var.combined_q_values:
-
-                                run_var.combined_q_values[state_str] = np.array(values).astype("float64")
-                            else:
-                                run_var.combined_q_values[state_str] += np.array(values).astype("float64")
+                        run_var.combined_q_values = update_q_values(q_values,run_var.combined_q_values)
+                        
                     #_-__-__-__-__-__-__-__-__-__-__-_            
                     logging.debug("main- finshed q vlaue combination")
                     #_-__-__-__-__-__-__-__-__-__-__-_
@@ -293,6 +290,7 @@ def main():
 
                 agent_to_test = SuperCarloAgent(run_var.combined_q_values,0.1)
 
+                #TODO This functionality exists inside the fo the agent already
                 total_wins, total_draws = test_agent_tic_tac_toe(agent_to_test,
                                                                  config.test_games,
                                                                  config.cores)
@@ -303,7 +301,7 @@ def main():
 
                 print(f"Games drawn {total_draws}")
 
-                run_var.overall_res[episodes] = (rate,total_wins,total_draws)
+                run_var.overall_res[run_var.last_e_total] = (rate,total_wins,total_draws)
 
             save_time= datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
 
