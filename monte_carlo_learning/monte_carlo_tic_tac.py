@@ -26,7 +26,7 @@ class MonteCarloAgent:
         }
     
     
-    def check_q_value_lengths(self,
+    def __check_q_value_lengths(self,
                               position:str):
         """Checks if the q values lengthsa re non standard
         """
@@ -57,7 +57,7 @@ class MonteCarloAgent:
             valid_moves = state.get_valid_moves()
             self.q_values[state_str] = np.zeros(len(valid_moves)).tolist()
         
-        self.check_q_value_lengths("initialize_q_values")
+        #self.check_q_value_lengths("initialize_q_values")
             
 
     def epsilon_greedy_policy(self, state):
@@ -119,7 +119,7 @@ class MonteCarloAgent:
     def train(self, episodes):
         for episode in range(episodes):
             self.train_episode(TicTacToe(random.choice([1,2])))
-        self.check_q_value_lengths("train")
+        #self.check_q_value_lengths("train")
         # Test your training logic...
     
     def play_x_test_games(self,
