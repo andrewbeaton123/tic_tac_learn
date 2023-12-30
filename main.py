@@ -1,6 +1,5 @@
 import numpy as np
 import logging 
-import  os
 logging.basicConfig(level="DEBUG")
 import random
 import pickle as pkl
@@ -12,87 +11,15 @@ from control.run_variables import RunVariableCreator
 from game.game_2 import TicTacToe
 from multiprocessing import Pool
 from datetime import datetime
+from typing import Dict
 from src.file_mangement.directory_creator import create_directory
 from game.get_all_states import generate_all_states
+#from game.test_mc_models import test_agent_tic_tac_toe
 from monte_carlo_learning.combine_q_value_dict import update_q_values
+from monte_carlo_learning.monte_carlo_tic_tac import MonteCarloAgent
+from multi_processing_tools.multi_process_controller import multi_process_controller
 #TODO move agents into their own files in the src structure
-class MonteCarloAgent:
-    def __init__(self, epsilon, all_possible_states):
-        self.epsilon = epsilon
-        self.q_values = {}
-        self.returns = {}
-        self.all_possible_states = all_possible_states
 
-
-    def to_serializable(self):
-        return {
-            'epsilon': self.epsilon,
-            'q_values': {str(k): v for k, v in self.q_values.items()},
-            'returns': self.returns,
-            'all_possible_states': self.all_possible_states,
-        }
-    def initialize_q_values(self):
-        for state in self.all_possible_states:
-            state_str = tuple(state.board.flatten())
-            valid_moves = state.get_valid_moves()
-            self.q_values[state_str] = np.zeros(len(valid_moves)).tolist()
-
-    def epsilon_greedy_policy(self, state):
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(len(state.get_valid_moves()))
-        state_str = tuple(state.board.flatten())
-        action_values = self.q_values.get(state_str, np.zeros(len(state.get_valid_moves())))#.tolist()
-        return np.argmax(action_values)
-
-    def train_episode(self, env):
-        episode_data = []
-        episode_returns = []
-        
-        while not env.is_game_over():
-            if env.current_player == 1:
-                action = self.epsilon_greedy_policy(env)
-            else:
-                action = np.random.choice(len(env.get_valid_moves()))
-            env.make_move(*env.get_valid_moves()[action])
-
-        state_str = tuple(env.board.flatten())
-        episode_data.append((state_str, self.q_values[state_str]))
-
-        for state_str, q_values in episode_data:
-            for action, value in enumerate(q_values):
-                self.q_values[state_str][action] = sum(
-                    episode_returns[i]
-                    for i in range(len(episode_returns))
-                    if state_str == episode_data[i][0]
-                    and episode_data[i][1][action] == value
-                )
-
-        return self.q_values, self.returns
-
-    def train(self, episodes):
-        for episode in range(episodes):
-            self.train_episode(TicTacToe(random.choice([1,2])))
-        # Test your training logic...
-        
-    def test(self):
-        wins = 0
-        draws = 0
-        for _ in range(10000):
-            env = TicTacToe(random.choice([1, 2]))
-            while not env.is_game_over():
-                if env.current_player == 1:
-                    action = self.epsilon_greedy_policy(env)
-                else:
-                    action = np.random.choice(len(env.get_valid_moves()))
-                env.make_move(*env.get_valid_moves()[action])
-
-            if env.winner == 1:
-                wins += 1
-            elif env.winner == 0:
-                draws += 1
-    
-        print(f"Agent won {wins} out of 10,000 games.")
-        print(f"Draws: {draws}")
 
 class SuperCarloAgent(MonteCarloAgent):
     def __init__(self,q_values:Dict,epsilon: float):
@@ -157,44 +84,8 @@ def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
             draws +=1
     return wins,draws 
 
-def multi_process_controller(func,configs,cores:int):
-    res_retun: list = []
-    with Pool(cores) as pool:
-        logging.debug("multi process controler thread create")
-                     
-        for  func_return in pool.imap_unordered(func,configs):
-            res_retun.append(func_return)
-    return res_retun
 
 #TODO Move this testing to the correct place in src
-def test_agent_tic_tac_toe(agent:SuperCarloAgent|MonteCarloAgent
-                                  ,num_tests:int =10000,
-                                  cores:int=4) -> (int,int):
-    """Plays num_tests games of tic tac toe using the monte_carlo
-    agent gready process against a random oponent
-    
-
-    Args:
-
-        agent (_type_, optional): The monte carlo based agent to play vs the 
-        random oponent 
-        num_tests int = The number of games to be played Defaults to 10000, 
-        cores:int=4 = The number of cores to split the games  across
-
-    Returns:
-        Tuple (int, int): total wins by the agent, total draws 
-    """
-    test_count_pc= int(num_tests/cores)
-    logging.debug("testing_agent - starting test for combined q's")
-    test_config = [(test_count_pc,agent) for _ in range(cores) ]
-    total_wins, total_draws= 0,0
-    res_test_games = multi_process_controller(test_agent,test_config,cores)
-    for multi_return_single in res_test_games:
-        wins_run, draw_run= multi_return_single
-        #logging.info(wins_run,draw_run)
-        total_wins += wins_run
-        total_draws += draw_run
-    return total_wins,total_draws
 
 
 
@@ -286,9 +177,9 @@ def main():
                 agent_to_test = SuperCarloAgent(run_var.combined_q_values,0.1)
 
                 #TODO This functionality exists inside the fo the agent already
-                total_wins, total_draws = test_agent_tic_tac_toe(agent_to_test,
-                                                                 config.test_games,
-                                                                 config.cores)
+                total_wins, total_draws = agent_to_test.test(
+                                                            config.test_games,
+                                                            config.cores)
                 
                 print(f"For Episodes :{run_var.last_e_total}")
 
