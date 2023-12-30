@@ -9,7 +9,7 @@ class MonteCarloAgent:
         self.q_values = {}
         self.returns = {}
         self.all_possible_states = all_possible_states
-
+        self.standard_q_length = 9
 
     def to_serializable(self):
         """
@@ -24,6 +24,25 @@ class MonteCarloAgent:
             'returns': self.returns,
             'all_possible_states': self.all_possible_states,
         }
+    
+    
+    def check_q_value_lengths(self,
+                              position:str):
+        """Checks if the q values lengthsa re non standard
+        """
+        # Create a list of q_values that have a length less than 9
+        non_standard_q_values = [x for x in self.q_values.values() if len(x) < self.standard_q_length]
+        
+        # Get the count of non-standard q_values
+        non_standard_q_count = len(non_standard_q_values)
+        
+        # Check if there are any non-standard q_values
+        if non_standard_q_count > 0:
+            # Log a warning message indicating the number of non-standard q_values
+            logging.warning(f"WARNING - {non_standard_q_count} Q values are non-standard lengths - Found in {position}")
+            
+            
+
     def initialize_q_values(self):
         """
         Initializes the Q-values for all possible states.
@@ -37,6 +56,9 @@ class MonteCarloAgent:
             state_str = tuple(state.board.flatten())
             valid_moves = state.get_valid_moves()
             self.q_values[state_str] = np.zeros(len(valid_moves)).tolist()
+        
+        self.check_q_value_lengths("initialize_q_values")
+            
 
     def epsilon_greedy_policy(self, state):
         """
@@ -91,12 +113,13 @@ class MonteCarloAgent:
                     if state_str == episode_data[i][0]
                     and episode_data[i][1][action] == value
                 )
-
+        
         return self.q_values, self.returns
 
     def train(self, episodes):
         for episode in range(episodes):
             self.train_episode(TicTacToe(random.choice([1,2])))
+        self.check_q_value_lengths("train")
         # Test your training logic...
     
     def play_x_test_games(self,

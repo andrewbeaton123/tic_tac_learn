@@ -41,7 +41,6 @@ def    mc_create_run_instance(args) ->(int,Dict):
     agent.train(episodes_in)
     #rint("mc_create_run_instance - finish")
     return episodes_in,agent.q_values
-
 def main():
 
         #~~~~~~~~~~~~~~~~~~~
@@ -76,6 +75,7 @@ def main():
         #TODO extract this code out and try and  make a base repeatable 
         
         for rate in tqdm(config.learning_rate, colour="green"):
+            run_var.last_e_total = 0
             # perform training using a single learning rate 
             for episodes in tqdm(range(1,config.total_training_games,config.steps)):#range(100000,1000000,100000):
                 # Split overall run numbers into checkpoint models 
