@@ -1,6 +1,6 @@
 import numpy as np
 import logging 
-logging.basicConfig(level="DEBUG")
+logging.basicConfig(level="INFO")
 import random
 import pickle as pkl
 import time
@@ -8,7 +8,6 @@ import time
 from tqdm import tqdm
 from control.config_class import ConfigClass
 from control.run_variables import RunVariableCreator
-from game.game_2 import TicTacToe
 from multiprocessing import Pool
 from datetime import datetime
 from typing import Dict
@@ -17,24 +16,9 @@ from game.get_all_states import generate_all_states
 #from game.test_mc_models import test_agent_tic_tac_toe
 from monte_carlo_learning.combine_q_value_dict import update_q_values
 from monte_carlo_learning.monte_carlo_tic_tac import MonteCarloAgent
+from monte_carlo_learning.super_carlo_tic_tac import SuperCarloAgent
 from multi_processing_tools.multi_process_controller import multi_process_controller
-#TODO move agents into their own files in the src structure
 
-
-class SuperCarloAgent(MonteCarloAgent):
-    def __init__(self,q_values:Dict,epsilon: float):
-        self.q_values = q_values
-        self.epsilon = epsilon
-    def to_serializable(self):
-        return {
-            'q_values': {str(k): v for k, v in self.q_values.items()},
-            'epsilon': self.epsilon
-        }
-    
-
-#TODO add in the ability to get a random board state in and play the game from there
-# this will balance the training set better
-#TODO move these 3 controller functions to their own files
 def    mc_create_run_instance(args) ->(int,Dict):
 
     """single run instances of the monte carlo agent training
@@ -57,38 +41,6 @@ def    mc_create_run_instance(args) ->(int,Dict):
     agent.train(episodes_in)
     #rint("mc_create_run_instance - finish")
     return episodes_in,agent.q_values
-
-def test_agent(args:(int ,SuperCarloAgent|MonteCarloAgent)) -> (int,int):
-    """_summary_
-
-    Args:
-        tests (_type_): _description_
-        int (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    tests,agent= args
-    wins , draws = 0 , 0
-    for _ in range(tests):
-        env = TicTacToe(random.choice([0,1]))
-        while not env.is_game_over():
-            if env.current_player == 1:
-                action = agent.epsilon_greedy_policy(env)
-            else:
-                action = np.random.choice(len(env.get_valid_moves()))
-            env.make_move(*env.get_valid_moves()[action])
-        if env.check_winner() == 1:
-            wins += 1
-        elif env.check_winner() ==0:
-            draws +=1
-    return wins,draws 
-
-
-#TODO Move this testing to the correct place in src
-
-
-
 
 def main():
 
