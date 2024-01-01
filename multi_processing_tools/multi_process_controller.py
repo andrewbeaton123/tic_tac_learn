@@ -15,6 +15,11 @@ def multi_process_controller(func,configs,cores:int):
     - A list of results returned by the function for each configuration.
     """
     res_retun: list = []
+    logging.debug(f"multi_process_controller- cores are {cores}")
+    logging.debug(f"multi_process_controller- configs are {configs}")
+    logging.debug(f"multi_process_controller- function is {func}")
+
+    
     with Pool(cores) as pool:
         logging.debug("multi process controler thread create")
                      

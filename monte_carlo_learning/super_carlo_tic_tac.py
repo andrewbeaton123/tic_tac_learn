@@ -7,7 +7,9 @@ class SuperCarloAgent(MonteCarloAgent):
                  q_values:Dict,
                  epsilon: float):
         self.q_values = q_values
+        self.returns = {}
         self.epsilon = epsilon
+        self.standard_q_length = 9
     def to_serializable(self):
         return {
             'q_values': {str(k): v for k, v in self.q_values.items()},

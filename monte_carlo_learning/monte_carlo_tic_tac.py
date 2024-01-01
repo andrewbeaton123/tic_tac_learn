@@ -26,21 +26,15 @@ class MonteCarloAgent:
         }
     
     
-    def __check_q_value_lengths(self,
-                              position:str):
-        """Checks if the q values lengthsa re non standard
-        """
-        # Create a list of q_values that have a length less than 9
-        non_standard_q_values = [x for x in self.q_values.values() if len(x) < self.standard_q_length]
+    def __check_q_values(self) -> bool:
         
-        # Get the count of non-standard q_values
-        non_standard_q_count = len(non_standard_q_values)
+        # Check if all q_values are either 0 or None
         
-        # Check if there are any non-standard q_values
-        if non_standard_q_count > 0:
-            # Log a warning message indicating the number of non-standard q_values
-            logging.warning(f"WARNING - {non_standard_q_count} Q values are non-standard lengths - Found in {position}")
-            
+         for key, value in self.q_values.items():
+            if not np.all(np.logical_or(value == 0, value is None)):
+                return False
+            return True
+       
             
 
     def initialize_q_values(self):
@@ -58,7 +52,19 @@ class MonteCarloAgent:
             self.q_values[state_str] = np.zeros(len(valid_moves)).tolist()
         
         #self.check_q_value_lengths("initialize_q_values")
-            
+    def initialize_q_values(self):
+        """
+        Initializes the Q-values for all possible states.
+
+        This method iterates over all possible states and initializes the Q-values for each state.
+
+        Returns:
+        - None
+        """
+        for state in self.all_possible_states:
+            state_str = tuple(state.board.flatten())
+            valid_moves = state.get_valid_moves()
+            self.q_values[state_str] = np.zeros(len(valid_moves)).tolist()
 
     def epsilon_greedy_policy(self, state):
         """
@@ -122,6 +128,7 @@ class MonteCarloAgent:
         #self.check_q_value_lengths("train")
         # Test your training logic...
     
+    # Testing the agents against a random oponent 
     def play_x_test_games(self,
                           x_games: int) -> (int, int):
         """

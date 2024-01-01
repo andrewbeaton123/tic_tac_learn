@@ -3,7 +3,7 @@ import numpy as np
 
 
 def  update_q_values(new_q_values: Dict, 
-                                        current_q_values: Dict )-> Dict:
+                    current_q_values: Dict )-> Dict:
                     """Takes in two dicts and creates a new record if it
                     was not in the dict and if it was already present 
                     then sum the values as a float64
@@ -20,11 +20,12 @@ def  update_q_values(new_q_values: Dict,
                         if the key was not found and summation if it was
                         found
                     """
+                    res_q_values = current_q_values.copy()
                     for state_str, values in new_q_values.items():
                         
-                        if state_str not in current_q_values:
+                        if state_str not in res_q_values:
 
-                            current_q_values[state_str] = np.array(values).astype("float64")
+                            res_q_values[state_str] = np.array(values).astype("float64")
                         else:
-                            current_q_values[state_str] += np.array(values).astype("float64")
-                    return current_q_values
+                            res_q_values[state_str] += np.array(values).astype("float64")
+                    return res_q_values
