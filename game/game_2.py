@@ -52,5 +52,4 @@ class TicTacToe:
             self.make_move(row, col)
             if self.is_game_over():
                 if self.winner == 1:
-                    return
-
+                    return self.winner

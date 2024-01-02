@@ -18,7 +18,7 @@ from monte_carlo_learning.monte_carlo_tic_tac import MonteCarloAgent
 from monte_carlo_learning.super_carlo_tic_tac import SuperCarloAgent
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
-def    mc_create_run_instance(args) ->(int,Dict):
+def mc_create_run_instance(args) ->(int,Dict):
     agent, episodes_in = args
     agent.train(episodes_in)
     return episodes_in,agent.q_values
@@ -26,12 +26,12 @@ def    mc_create_run_instance(args) ->(int,Dict):
 def setup_mc_class(args) -> MonteCarloAgent:
     all_states,lr = args
     agent= MonteCarloAgent(lr,all_states)
-    agent.initialize_q_values()
+    #agent.initialize_q_values()
     return agent
 
 def setup_sc_class(args) -> SuperCarloAgent:
-    all_states,lr = args
-    return SuperCarloAgent(all_states,lr)
+    q_values ,lr = args
+    return SuperCarloAgent(q_values,lr)
 
 def main():
 
@@ -39,10 +39,10 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(8,# cores
-                             15000,#steps per run
-                             100000, # total runs to create a model from
-                             70000,#How many games to test with
+        config = ConfigClass(5,# cores
+                             5,#steps per run
+                             50, # total runs to create a model from
+                             700,#How many games to test with
                              [0.1,0.01,0.001]# learning rates 
                              )
         
@@ -85,8 +85,8 @@ def main():
                 logging.debug(f"main - Starting {episodes}")
                 
                 # steps to be given to each core
-                __steps_pc = int(config.steps/config.cores)
-                
+                __steps_pc = int((config.steps/config.cores)+1)
+                logging.debug(f"Main - steps are {__steps_pc}")
                 configs = [(agents[_c],__steps_pc) for _c in range(config.cores)]
                 
                 #_-__-__-__-__-__-__-__-__-__-__-_
@@ -103,7 +103,7 @@ def main():
                 
                 t_after_train = time.time()
 
-                time_taken_to_train = round(t_after_train-t_before_train)
+                time_taken_to_train = round(t_after_train-t_before_train)+1e-9
 
                 games_per_sec= round(config.steps/ time_taken_to_train)
 
@@ -121,7 +121,7 @@ def main():
                 for mc_return_single in multi_core_returns:
 
                     episodes, q_values = mc_return_single
-
+                    
                     logging.debug(f"main -q length {len((q_values).keys())}")
                     run_var.combined_q_values = update_q_values(q_values,run_var.combined_q_values)
                     
