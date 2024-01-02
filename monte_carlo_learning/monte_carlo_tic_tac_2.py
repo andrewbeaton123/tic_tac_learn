@@ -4,9 +4,9 @@ import pickle
 from game.game_2 import TicTacToe
 import random
 from multi_processing_tools.multi_process_controller import multi_process_controller
+import logging
 
-
-class MonteCarlo:
+class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states):
         self.epsilon = epsilon
         self.q_values = {}
@@ -15,20 +15,41 @@ class MonteCarlo:
         
         for state in self.all_possible_states:
             self.q_values[state] = {}
-            for action in range(9):  # 9 possible actions in a Tic Tac Toe game
+            board = np.reshape(list(state),(3,3))
+            env = TicTacToe(1,board)
+            for action in range(len(env.get_valid_moves())):  # 9 possible actions in a Tic Tac Toe game
                 self.q_values[state][action] = 0
                 self.returns[(state, action)] = []
-                
+
     def load_q_values(self, q_values):
         self.q_values = q_values
+    def check_q_values(self) -> bool:
+        
+        # Check if all q_values are either 0 or None
+        
+         for key, value in self.q_values.items():
+            if not np.all(np.logical_or(value == 0, value is None)):
+                return False
+            return True
     def get_state(self, env):
-        return str(env.board.reshape(-1))
-
+        return env.board.reshape(-1)
+    def train(self, episodes):
+        
+        
+            
+        self.learn(TicTacToe(random.choice([1,2])),episodes)
+        if self.check_q_values():
+            logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
+            logging.info((next(iter(self.q_values.items()))[1]))
+    
     def get_action(self, env):
-        state = self.get_state(env)
+        state = tuple(self.get_state(env))
         if np.random.rand() < self.epsilon:
             return np.random.choice(list(self.q_values[state].keys()))
         else:
+            logging.debug("get action - selecting move from q values")
+            logging.debug(f"get action - {self.q_values[state]}")
+            logging.debug("get action -  and  q states ")
             return max(self.q_values[state], key=self.q_values[state].get)
 
     def update(self, env, state, action, reward):
@@ -40,8 +61,10 @@ class MonteCarlo:
             env.reset()
             state_action_reward = []
             while not env.is_game_over():
-                action = self.get_action(env)
-                old_state = self.get_state(env)
+                action = self.get_action(env) 
+                old_state = tuple(self.get_state(env))
+                logging.debug(f" valid moves are {env.get_valid_moves()}")
+                logging.debug(f" move is {action}")
                 env.make_move(*env.get_valid_moves()[action])
                 reward = -1 if env.is_game_over() and env.winner != 1 else 0
                 state_action_reward.append((old_state, action, reward))
@@ -88,7 +111,7 @@ class MonteCarlo:
 
                 # Decide the action based on the current player
                 if env.current_player == 1:
-                    action = self.epsilon_greedy_policy(env)
+                    action = self.get_action(env)
                 else:
                     action = np.random.choice(len(env.get_valid_moves()))
 
