@@ -1,5 +1,6 @@
 import numpy as np 
 import logging
+import copy
 import random
 from game.game_2 import TicTacToe
 from multi_processing_tools.multi_process_controller import multi_process_controller
@@ -82,13 +83,29 @@ class MonteCarloAgent:
             else:
                 action = np.random.choice(len(env.get_valid_moves()))
             
+            if action >len(env.get_valid_moves()):
+                logging.warning("In while loop action larger")
+               
+            logging.debug(f"Train episode - Board is {env.board.flatten()}")
+            logging.debug(f"Train episode - move chosed is {env.get_valid_moves()[action]}")
+            # Create a copy of the env object
+            env_copy = copy.deepcopy(env)
+            
             env.make_move(*env.get_valid_moves()[action])
             reward = -1 if env.is_game_over() and env.winner != 1 else 0
-            episode_data.append((env, action, reward))
-        episode_data.pop()
+            
+            # Append the env copy, action, and reward to episode_data
+            episode_data.append((env_copy, action, reward))
+            if action >len(env.get_valid_moves()):
+                logging.warning("after append action larger")
+        #episode_data.pop()
         G = 0
         for i in reversed(range(len(episode_data))):
             state, action, reward = episode_data[i]
+            
+            if action > len(episode_data[i-1][0].get_valid_moves()):
+                logging.error("train episode - action is higher than state in reversed loop  ! ")
+            #action -=1
             
             state_str = tuple(state.board.flatten())
             G = reward + self.epsilon * G
@@ -99,18 +116,42 @@ class MonteCarloAgent:
                     self.returns[state_str][action] = []
                 self.returns[state_str][action].append(G)
                 
-                
+
+
+                delayed_enviroment_valid_moves = episode_data[i-1][0].get_valid_moves()
+
+                logging.debug(f"trian episode - delayed enviroment  len is {len(delayed_enviroment_valid_moves)}")
+
+
                 if state_str not in self.q_values or  not isinstance(self.q_values[state_str],np.ndarray):
-                    self.q_values[state_str] = np.zeros( len(env.get_valid_moves()))
-                elif len(self.q_values[state_str]) < len(env.get_valid_moves()):
-                    self.q_values[state_str] += np.zeros((len(env.get_valid_moves()) - len(self.q_values[state_str])))
+                    logging.debug(f"train episode - creating action values for game state in rev loop ")
+                    self.q_values[state_str] = np.zeros( len(delayed_enviroment_valid_moves))
+                elif len(self.q_values[state_str]) < len(delayed_enviroment_valid_moves):
+                    logging.debug(f"train episode - enlarging the lenght of game state q value array")
+                    self.q_values[state_str] += np.zeros((len(delayed_enviroment_valid_moves
+                                                              ) - len(self.q_values[state_str])))
                 
                 
 
                 if len(env.get_valid_moves()) > 0:
+                    print(state_str)
+                    print(action)
+                    print(episode_data[i-2][0].get_valid_moves())
+                    print(episode_data[i-1][0].get_valid_moves())
+                    print(env.get_valid_moves())
                     
-                    try:
-                        self.q_values[state_str][action] = np.mean(self.returns[state_str][action])
+                    #print(len(env.get_valid_moves()))
+                    #print(self.q_values[state_str])
+                    print(self.returns[state_str])
+                    print(self.q_values[state_str])
+                    
+                    self.q_values[state_str][action] = np.mean(self.returns[state_str][action])
+                    
+                    print(episode_data[i])
+                    print(episode_data)
+                    
+                    """ try:
+                        self.q_values[state_str][str(action)] = np.mean(self.returns[state_str][action])
                     except IndexError:
                         logging.error(type(self.q_values[state_str][0]))
                         logging.error(type(np.mean(self.returns[state_str][action])))
@@ -118,7 +159,7 @@ class MonteCarloAgent:
                         #logging.error(np.mean(self.returns[state_str][action]))
                         logging.error(f" Error in the meaning of values action,{action} and {state_str} with{self.returns[state_str]} ")
                         logging.error(f" There are {len(env.get_valid_moves())} Valid moves")
-                        logging.error(f"Values for this action are currently {self.q_values[state_str][0]}")
+                        logging.error(f"Values for this action are currently {self.q_values[state_str][0]}") """
                     
 
     def train(self, episodes):

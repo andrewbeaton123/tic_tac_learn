@@ -1,6 +1,6 @@
 import numpy as np
 import logging 
-logging.basicConfig(level="INFO")
+logging.basicConfig(level="DEBUG")
 import pickle as pkl
 import time
 # Monte Carlo Control Agent
@@ -96,7 +96,8 @@ def main():
                 #_-__-__-__-__-__-__-__-__-__-__-_
                 
                 t_before_train = time.time()
-
+                mc_create_run_instance(configs[0])
+                exit()
                 multi_core_returns = multi_process_controller(mc_create_run_instance,
                                                                 configs,
                                                                 config.cores)
