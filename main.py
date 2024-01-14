@@ -35,10 +35,10 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(2,# cores
-                             50000,#steps per run
-                             50000, # total runs to create a model from
-                             70000,#How many games to test with
+        config = ConfigClass(1,# cores
+                             300000,#steps per run
+                             1000000, # total runs to create a model from
+                             9508,#How many games to test with
                              [0.1,0.01,0.001]# learning rates 
                              )
         
@@ -156,8 +156,8 @@ def main():
                 
                 print(f"For Episodes :{run_var.last_e_total}")
 
-                print(f"Agent won {total_wins} out of {config.test_games} games.")
-
+                #print(f"Agent won {total_wins} out of {config.test_games} games.")
+                print(f"Winrate is {round((total_wins/config.test_games)*100)}%")
                 print(f"Games drawn {total_draws}")
 
                 run_var.overall_res[run_var.last_e_total] = (rate,total_wins,total_draws)

@@ -22,7 +22,7 @@ class MonteCarloAgent:
                 self.returns[(state, action)] = []
 
     def load_q_values(self, q_values):
-        self.q_values = q_values
+        self.q_values = q_values.copy()
     def check_q_values(self) -> bool:
         
         # Check if all q_values are either 0 or None
@@ -66,7 +66,9 @@ class MonteCarloAgent:
                 logging.debug(f" valid moves are {env.get_valid_moves()}")
                 logging.debug(f" move is {action}")
                 env.make_move(*env.get_valid_moves()[action])
-                reward = -1 if env.is_game_over() and env.winner != 1 else 0
+                reward =self.calculate_reward(env)
+                #This is old version of above
+                #-1 if env.is_game_over() and env.winner != 1 else 0
                 state_action_reward.append((old_state, action, reward))
             
             for state, action, _ in state_action_reward:
@@ -77,6 +79,18 @@ class MonteCarloAgent:
     def serialize(self, filename="montecarlo.pkl"):
         with open(filename, "wb") as file:
             pickle.dump(self, file)
+
+
+    def calculate_reward(self, env):
+        if env.is_game_over():
+            if env.winner == 1:
+                return 1  # Player 1 wins
+            elif env.winner == 2:
+                return -1  # Player 2 wins
+            else:
+                return 0  # Draw
+        return 0  # Continue playing, no immediate reward
+    
 
     @classmethod
     def deserialize(cls, filename="montecarlo.pkl"):
