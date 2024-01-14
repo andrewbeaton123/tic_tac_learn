@@ -37,7 +37,7 @@ class MonteCarloAgent:
         
         
             
-        self.learn(TicTacToe(random.choice([1,2])),episodes)
+        self.learn(TicTacToe(1),episodes) ## Old Random implementationrandom.choice([1,2])
         if self.check_q_values():
             logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
             logging.info((next(iter(self.q_values.items()))[1]))

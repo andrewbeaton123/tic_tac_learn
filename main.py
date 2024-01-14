@@ -36,10 +36,11 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         
         config = ConfigClass(1,# cores
-                             300000,#steps per run
-                             1000000, # total runs to create a model from
+                             200000,#steps per run
+                             600000, # total runs to create a model from
                              9508,#How many games to test with
-                             [0.1,0.01,0.001]# learning rates 
+                             [0.1,0.01,0.001],# learning rates 
+                             "Testing_non_random_player"
                              )
         
 
@@ -168,10 +169,10 @@ def main():
 
             create_directory(dir_save)
 
-            with open(f"{dir_save}//latest_overall_results_{run_var.last_e_total}_lr_{rate}.pkl", "wb") as f :
+            with open(f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{rate}.pkl", "wb") as f :
                 pkl.dump(run_var.overall_res,f)
             
-            with open(f"{dir_save}//Combination_super_carlo_{run_var.last_e_total}_lr_{rate}.pkl","wb") as f2:
+            with open(f"{dir_save}//{config.run_name}_Combination_super_carlo_{run_var.last_e_total}_lr_{rate}.pkl","wb") as f2:
                 pkl.dump(agent_to_test, f2)
 
         return run_var.overall_res
