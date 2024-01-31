@@ -35,11 +35,12 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(1,# cores
-                             200000,#steps per run
-                             600000, # total runs to create a model from
+        config = ConfigClass(8,# cores
+                             40000,#steps per run
+                             3000000, # total runs to create a model from
                              9508,#How many games to test with
-                             [0.1,0.01,0.001],# learning rates 
+                             [0.9],# learning rates 
+
                              "Testing_non_random_player"
                              )
         
@@ -77,7 +78,7 @@ def main():
         
         for rate in tqdm(config.learning_rate, colour="green"):
             run_var.last_e_total = 0
-            
+            run_inital_rate : float  = rate
             # perform training using a single learning rate 
             for episodes in tqdm(range(1,config.total_training_games,config.steps)):#range(100000,1000000,100000):
                 
@@ -112,6 +113,15 @@ def main():
                 #for agent in agents:
                 #    logging.error(f" main - all q values are 0 = {agent.check_q_values()}")
                 #exit()
+                
+                # learning rate scaling
+                if run_var.last_e_total != 0 : 
+                    learning_rate_change  = ((1 - run_inital_rate)*10000)/run_var.last_e_total
+                    logging.info(f"The learning rate change is : {learning_rate_change}")
+                    rate -=learning_rate_change*2
+
+
+                logging.info(f"Current learning rate is : {rate}")
                 multi_core_returns = multi_process_controller(mc_create_run_instance,
                                                                 configs,
                                                                 config.cores)
