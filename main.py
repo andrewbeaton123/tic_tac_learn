@@ -36,12 +36,12 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         
         config = ConfigClass(8,# cores
-                             40000,#steps per run
-                             3000000, # total runs to create a model from
+                             100000,#steps per run
+                             1000000, # total runs to create a model from
                              9508,#How many games to test with
-                             [0.9],# learning rates 
+                             [0.95],# learning rates 
 
-                             "Testing_non_random_player"
+                             "Changed get action to random if not player 1"
                              )
         
 
@@ -116,9 +116,12 @@ def main():
                 
                 # learning rate scaling
                 if run_var.last_e_total != 0 : 
-                    learning_rate_change  = ((1 - run_inital_rate)*10000)/run_var.last_e_total
-                    logging.info(f"The learning rate change is : {learning_rate_change}")
-                    rate -=learning_rate_change*2
+                    #learning_rate_change  = ((1 - run_inital_rate)*10000)/run_var.last_e_total
+                    #logging.info(f"The learning rate change is : {learning_rate_change}")
+                    
+                    rate -= 0.1 #learning_rate_change*25
+                    if rate < 0.1: 
+                        rate = 0.1
 
 
                 logging.info(f"Current learning rate is : {rate}")
@@ -179,10 +182,10 @@ def main():
 
             create_directory(dir_save)
 
-            with open(f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{rate}.pkl", "wb") as f :
+            with open(f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{run_inital_rate}.pkl", "wb") as f :
                 pkl.dump(run_var.overall_res,f)
             
-            with open(f"{dir_save}//{config.run_name}_Combination_super_carlo_{run_var.last_e_total}_lr_{rate}.pkl","wb") as f2:
+            with open(f"{dir_save}//{config.run_name}_Combination_super_carlo_{run_var.last_e_total}_lr_{run_inital_rate}.pkl","wb") as f2:
                 pkl.dump(agent_to_test, f2)
 
         return run_var.overall_res

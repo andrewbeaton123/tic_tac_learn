@@ -44,13 +44,16 @@ class MonteCarloAgent:
     
     def get_action(self, env):
         state = tuple(self.get_state(env))
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(list(self.q_values[state].keys()))
+        if env.current_player == 1:
+            if np.random.rand() < self.epsilon:
+                return np.random.choice(list(self.q_values[state].keys()))
+            else:
+                logging.debug("get action - selecting move from q values")
+                logging.debug(f"get action - {self.q_values[state]}")
+                logging.debug("get action -  and  q states ")
+                return max(self.q_values[state], key=self.q_values[state].get)
         else:
-            logging.debug("get action - selecting move from q values")
-            logging.debug(f"get action - {self.q_values[state]}")
-            logging.debug("get action -  and  q states ")
-            return max(self.q_values[state], key=self.q_values[state].get)
+                return np.random.choice(len(env.get_valid_moves()))
 
     def update(self, env, state, action, reward):
         self.returns[(state, action)].append(reward)
