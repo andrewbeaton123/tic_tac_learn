@@ -5,19 +5,22 @@ import pickle as pkl
 import time
 # Monte Carlo Control Agent
 from tqdm import tqdm
-from control.config_class import ConfigClass
-from control.run_variables import RunVariableCreator
+from src.control.config_class import ConfigClass
+from src.control.run_variables import RunVariableCreator
 from multiprocessing import Pool
 from datetime import datetime
 from typing import Dict
-from src.file_mangement.directory_creator import create_directory
+
 from game.get_all_states import generate_all_states
 #from game.test_mc_models import test_agent_tic_tac_toe
 from monte_carlo_learning.combine_q_value_dict import combine_q_values
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
-def mc_create_run_instance(args) ->(int,Dict):
+from src.results_saving.save_controller import save_results_core
+
+
+def mc_create_run_instance(args) -> tuple[int,Dict]:
     agent, episodes_in = args
     agent.train(episodes_in)
     return agent
@@ -35,9 +38,9 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(8,# cores
-                             100000,#steps per run
-                             1000000, # total runs to create a model from
+        config = ConfigClass(4,# cores
+                             1000,#steps per run
+                             10000, # total runs to create a model from
                              9508,#How many games to test with
                              [0.95],# learning rates 
 
@@ -49,16 +52,7 @@ def main():
         #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
         #End of User editable variables 
         #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
-        def generate_all_states():
-            all_states = []
-            for i in range(3**9):  # There are 3^9 possible states in a 3x3 Tic Tac Toe game
-                state = []
-                for j in range(9):  # Each state is a list of 9 numbers
-                    state.append(i % 3)
-                    i //= 3
-                all_states.append(tuple(state))
-            return all_states
-
+        
         all_possible_states = generate_all_states()
         # Generate all possible states
         #all_possible_states = 
@@ -119,8 +113,8 @@ def main():
                     #learning_rate_change  = ((1 - run_inital_rate)*10000)/run_var.last_e_total
                     #logging.info(f"The learning rate change is : {learning_rate_change}")
                     
-                    rate -= 0.1 #learning_rate_change*25
-                    if rate < 0.1: 
+                    rate -= 0.3 #learning_rate_change*25
+                    if rate < 0.01: 
                         rate = 0.1
 
 
@@ -176,17 +170,11 @@ def main():
 
                 run_var.overall_res[run_var.last_e_total] = (rate,total_wins,total_draws)
 
-            save_time= datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-
-            dir_save = f".//runs//games-{run_var.last_e_total}_learning_rate-{rate}_{save_time}//"
-
-            create_directory(dir_save)
-
-            with open(f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{run_inital_rate}.pkl", "wb") as f :
-                pkl.dump(run_var.overall_res,f)
-            
-            with open(f"{dir_save}//{config.run_name}_Combination_super_carlo_{run_var.last_e_total}_lr_{run_inital_rate}.pkl","wb") as f2:
-                pkl.dump(agent_to_test, f2)
+            save_results_core(run_var,
+                              rate,
+                              config,
+                              run_inital_rate,
+                              agent_to_test)
 
         return run_var.overall_res
 

@@ -102,7 +102,7 @@ class MonteCarloAgent:
     
     # Testing the agents against a random oponent 
     def play_x_test_games(self,
-                          num_games : int) -> (int, int):
+                          num_games : int) -> tuple[int,int]:
         """
         Function to play 'x_games' number of Tic Tac Toe games and count the number of wins and draws.
 
