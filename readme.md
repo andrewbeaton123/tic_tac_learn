@@ -1,11 +1,26 @@
-# Tic Tac Learn
+# Tic Tac Toe Game with Reinforcement Learning
 
-## Overview 
-This repo is a developmental space where different models that learn how to play tic tac toe can be created. 
+This repository contains a Tic Tac Toe game that uses reinforcement learning techniques to train the game player. The ML approach uses Q-values, epsilon greedy selections, and multi-threading to learn and improve its gameplay.
 
-## Methods
-### Reinforcement Learning
-This is currently implemented through montecarlo based methods. These methods generate q values fir each game state. These q values are then used to pick th emost optimal move to win the game. 
-The code base is iterating quickly at this early stage and so the mc_[num] can be used to track the latest methods being trialed. At writing this is mc_simplified_multiprocess.py  and mc_6_refactor.py
+## Reinforcement Learning
 
-In addition to the python there is a developmental - non working verison in Julia to compare speed at a later date
+The code learns by playing the game multiple times and updating the Q-values based on the outcomes of the games. An epsilon greedy selection strategy is used to balance exploration and exploitation during the learning process. The learning process is multi-threaded to speed up the training.
+
+## Configuration
+
+You can run the learning process by changing the `ConfigClass` in the main file. Here is an example of how to do this:
+
+In this example, the learning process will be run on 4 cores, with 1000 steps per run, for a total of 10000 runs. The resulting model will be tested with 9508 games. The learning rate is set to 0.95.
+
+```
+    config = ConfigClass(4,# cores
+        1000,#steps(games) per run
+        10000, # total games to create a model from
+        9508,#How many games to test with
+        [0.95],# learning rate starting values
+        "Run Name Here"
+        )
+```
+## Current Status
+
+Please note that this code is a work in progress and is currently not in active development.
