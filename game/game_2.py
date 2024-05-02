@@ -9,6 +9,9 @@ class TicTacToe:
             self.board = np.zeros((3, 3))  # 3x3 Tic Tac Toe board
         else :
             self.board = board
+            
+    def __str__(self):
+        return f"TicTacToe(current_player={self.current_player}, winner={self.winner}, board=\n{self.board})"
 
     def reset(self):
         self.board = np.zeros((3, 3))

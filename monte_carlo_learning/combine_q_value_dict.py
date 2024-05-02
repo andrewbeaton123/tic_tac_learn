@@ -3,6 +3,33 @@ import numpy as np
 import logging
 
 
+def combine_q_values(agents):
+    combined_q_values = {}
+    
+    # Initialize combined_q_values with the structure of q_values from the first agent
+    for state, actions in agents[0].q_values.items():
+        combined_q_values[state] = {}
+        for action, value in actions.items():
+            combined_q_values[state][action] = 0
+
+    # Sum the Q values from all agents
+    for agent in agents:
+        for state, actions in agent.q_values.items():
+            for action, value in actions.items():
+                combined_q_values[state][action] += value
+
+    # Divide by the number of agents to get the average
+    num_agents = len(agents)
+    for state, actions in combined_q_values.items():
+        for action, value in actions.items():
+            combined_q_values[state][action] /= num_agents
+
+    return combined_q_values
+
+
+
+
+
 def  update_q_values(new_q_values: Dict, 
                     current_q_values: Dict )-> Dict:
                     """Takes in two dicts and creates a new record if it

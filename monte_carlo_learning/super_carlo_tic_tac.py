@@ -1,5 +1,5 @@
 
-from monte_carlo_learning.monte_carlo_tic_tac import MonteCarloAgent
+from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from typing import Dict
 
 class SuperCarloAgent(MonteCarloAgent):

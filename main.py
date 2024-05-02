@@ -5,23 +5,25 @@ import pickle as pkl
 import time
 # Monte Carlo Control Agent
 from tqdm import tqdm
-from control.config_class import ConfigClass
-from control.run_variables import RunVariableCreator
+from src.control.config_class import ConfigClass
+from src.control.run_variables import RunVariableCreator
 from multiprocessing import Pool
 from datetime import datetime
 from typing import Dict
-from src.file_mangement.directory_creator import create_directory
+
 from game.get_all_states import generate_all_states
 #from game.test_mc_models import test_agent_tic_tac_toe
-from monte_carlo_learning.combine_q_value_dict import update_q_values
-from monte_carlo_learning.monte_carlo_tic_tac import MonteCarloAgent
-from monte_carlo_learning.super_carlo_tic_tac import SuperCarloAgent
+from monte_carlo_learning.combine_q_value_dict import combine_q_values
+from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
-def mc_create_run_instance(args) ->(int,Dict):
+from src.results_saving.save_controller import save_results_core
+
+
+def mc_create_run_instance(args) -> tuple[int,Dict]:
     agent, episodes_in = args
     agent.train(episodes_in)
-    return episodes_in,agent.q_values
+    return agent
 
 def setup_mc_class(args) -> MonteCarloAgent:
     all_states,lr = args
@@ -29,9 +31,6 @@ def setup_mc_class(args) -> MonteCarloAgent:
     #agent.initialize_q_values()
     return agent
 
-def setup_sc_class(args) -> SuperCarloAgent:
-    q_values ,lr = args
-    return SuperCarloAgent(q_values,lr)
 
 def main():
 
@@ -39,11 +38,13 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(5,# cores
-                             5,#steps per run
-                             50, # total runs to create a model from
-                             700,#How many games to test with
-                             [0.1,0.01,0.001]# learning rates 
+        config = ConfigClass(4,# cores
+                             1000,#steps per run
+                             10000, # total runs to create a model from
+                             9508,#How many games to test with
+                             [0.95],# learning rates 
+
+                             "Changed get action to random if not player 1"
                              )
         
 
@@ -52,11 +53,13 @@ def main():
         #End of User editable variables 
         #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
         
-        
+        all_possible_states = generate_all_states()
+        # Generate all possible states
+        #all_possible_states = 
        #~~~~~~~~~~~~~~~~~~~
         #Create Variables for the run
         #~~~~~~~~~~~~~~~~~~~
-        run_var = RunVariableCreator(generate_all_states(),# get a list of all possible board states are tic tac toe game 
+        run_var = RunVariableCreator(all_possible_states,# get a list of all possible board states are tic tac toe game 
                            {}, #overall results dict
                            {},# The combined q levels for each model
                            0,# number of episodes trained so far this run
@@ -69,18 +72,20 @@ def main():
         
         for rate in tqdm(config.learning_rate, colour="green"):
             run_var.last_e_total = 0
-            
+            run_inital_rate : float  = rate
             # perform training using a single learning rate 
             for episodes in tqdm(range(1,config.total_training_games,config.steps)):#range(100000,1000000,100000):
                 
-                if not run_var.combined_q_values: 
+                if episodes != 1:
+                    combined_agent = MonteCarloAgent(rate, all_possible_states)
+                    combined_agent.load_q_values(combined_q_values)
+                    agents = [combined_agent for core in range(config.cores)]
+                else :
                     logging.info("Setting all possible states")
+                    #logging.debug(run_var.all_possible_states)
+                    logging.debug(len(run_var.all_possible_states))
                     agents = [setup_mc_class((run_var.all_possible_states,rate))  for core in range (config.cores)]
-                else:
-
-                    logging.info(" Loading q values into monte carlo agents")
-                    agents = [setup_sc_class((run_var.combined_q_values,rate))  for core in range (config.cores)]
-                # Split overall run numbers into checkpoint models 
+                
 
                 logging.debug(f"main - Starting {episodes}")
                 
@@ -96,7 +101,24 @@ def main():
                 #_-__-__-__-__-__-__-__-__-__-__-_
                 
                 t_before_train = time.time()
+                #print(configs[0])
+                
+                #agents = [mc_create_run_instance(configs[0])]
+                #for agent in agents:
+                #    logging.error(f" main - all q values are 0 = {agent.check_q_values()}")
+                #exit()
+                
+                # learning rate scaling
+                if run_var.last_e_total != 0 : 
+                    #learning_rate_change  = ((1 - run_inital_rate)*10000)/run_var.last_e_total
+                    #logging.info(f"The learning rate change is : {learning_rate_change}")
+                    
+                    rate -= 0.3 #learning_rate_change*25
+                    if rate < 0.01: 
+                        rate = 0.1
 
+
+                logging.info(f"Current learning rate is : {rate}")
                 multi_core_returns = multi_process_controller(mc_create_run_instance,
                                                                 configs,
                                                                 config.cores)
@@ -118,19 +140,22 @@ def main():
                 #_-__-__-__-__-__-__-__-__-__-__-_
 
                 
-                for mc_return_single in multi_core_returns:
+                #for mc_return_single in multi_core_returns:
 
-                    episodes, q_values = mc_return_single
-                    
-                    logging.debug(f"main -q length {len((q_values).keys())}")
-                    run_var.combined_q_values = update_q_values(q_values,run_var.combined_q_values)
-                    
+                
+                # Combine the Q values from multiple agents
+                agents = multi_core_returns # Replace with your actual agents
+                combined_q_values = combine_q_values(agents)
+
+                # Load the combined Q values into a new agent
+                combined_agent = MonteCarloAgent(rate, all_possible_states)
+                combined_agent.load_q_values(combined_q_values)
                 #_-__-__-__-__-__-__-__-__-__-__-_            
                 logging.debug("main- finshed q vlaue combination")
                 #_-__-__-__-__-__-__-__-__-__-__-_
                 run_var.last_e_total +=sum([e_s[1] for e_s in configs])
 
-                agent_to_test = SuperCarloAgent(run_var.combined_q_values,0.1)
+                agent_to_test = combined_agent
 
                 #TODO This functionality exists inside the fo the agent already
                 total_wins, total_draws = agent_to_test.test(
@@ -139,23 +164,17 @@ def main():
                 
                 print(f"For Episodes :{run_var.last_e_total}")
 
-                print(f"Agent won {total_wins} out of {config.test_games} games.")
-
+                #print(f"Agent won {total_wins} out of {config.test_games} games.")
+                print(f"Winrate is {round((total_wins/config.test_games)*100)}%")
                 print(f"Games drawn {total_draws}")
 
                 run_var.overall_res[run_var.last_e_total] = (rate,total_wins,total_draws)
 
-            save_time= datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-
-            dir_save = f".//runs//games-{run_var.last_e_total}_learning_rate-{rate}_{save_time}//"
-
-            create_directory(dir_save)
-
-            with open(f"{dir_save}//latest_overall_results_{run_var.last_e_total}_lr_{rate}.pkl", "wb") as f :
-                pkl.dump(run_var.overall_res,f)
-            
-            with open(f"{dir_save}//Combination_super_carlo_{run_var.last_e_total}_lr_{rate}.pkl","wb") as f2:
-                pkl.dump(agent_to_test, f2)
+            save_results_core(run_var,
+                              rate,
+                              config,
+                              run_inital_rate,
+                              agent_to_test)
 
         return run_var.overall_res
 

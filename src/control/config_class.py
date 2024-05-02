@@ -15,3 +15,4 @@ class ConfigClass(NamedTuple):
     total_training_games: int
     test_games: int
     learning_rate: list
+    run_name : str
