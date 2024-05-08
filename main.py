@@ -38,13 +38,13 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(4,# cores
-                             1000,#steps per run
-                             10000, # total runs to create a model from
+        config = ConfigClass(6,# cores
+                             4000,#steps per run
+                             800000, # total runs to create a model from
                              9508,#How many games to test with
                              [0.95],# learning rates 
 
-                             "Changed get action to random if not player 1"
+                             "reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
                              )
         
 
@@ -113,9 +113,9 @@ def main():
                     #learning_rate_change  = ((1 - run_inital_rate)*10000)/run_var.last_e_total
                     #logging.info(f"The learning rate change is : {learning_rate_change}")
                     
-                    rate -= 0.3 #learning_rate_change*25
-                    if rate < 0.01: 
-                        rate = 0.1
+                    rate -= 0.007 #learning_rate_change*25
+                    if rate < 0.03: 
+                        rate = 0.03
 
 
                 logging.info(f"Current learning rate is : {rate}")
@@ -168,7 +168,10 @@ def main():
                 print(f"Winrate is {round((total_wins/config.test_games)*100)}%")
                 print(f"Games drawn {total_draws}")
 
-                run_var.overall_res[run_var.last_e_total] = (rate,total_wins,total_draws)
+                run_var.overall_res[run_var.last_e_total] = (rate,
+                                                             total_wins,
+                                                             total_draws,
+                                                             config.test_games)
 
             save_results_core(run_var,
                               rate,

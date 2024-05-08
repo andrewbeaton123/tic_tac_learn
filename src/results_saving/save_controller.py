@@ -1,5 +1,6 @@
 from datetime import datetime
 import pickle as pkl
+import logging
 from src.control.run_variables import RunVariableCreator
 from src.control.config_class import ConfigClass
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
@@ -31,8 +32,13 @@ def save_results_core(
 
             create_directory(dir_save)
 
-            with open(f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{run_inital_rate}.pkl", "wb") as f :
+            run_metrics_path = f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{run_inital_rate}.pkl"
+            with open(run_metrics_path, "wb") as f :
+                logging.info(f"Run metrics stored in : {run_metrics_path} \n")
                 pkl.dump(run_var.overall_res,f)
-            
-            with open(f"{dir_save}//{config.run_name}_Combination_super_carlo_{run_var.last_e_total}_lr_{run_inital_rate}.pkl","wb") as f2:
+
+
+            combo_model_path =f"{dir_save}//{config.run_name}_Combination_super_carlo_{run_var.last_e_total}_lr_{run_inital_rate}.pkl"
+            with open(combo_model_path,"wb") as f2:
+                logging.info(f"Combonation model stored in : {combo_model_path} \n")
                 pkl.dump(agent_to_test, f2)
