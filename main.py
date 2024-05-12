@@ -11,7 +11,7 @@ from multiprocessing import Pool
 from datetime import datetime
 from typing import Dict
 
-from game.get_all_states import generate_all_states
+from src.game.get_all_states import generate_all_states
 #from game.test_mc_models import test_agent_tic_tac_toe
 from monte_carlo_learning.combine_q_value_dict import combine_q_values
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
@@ -38,13 +38,13 @@ def main():
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
         
-        config = ConfigClass(6,# cores
+        config = ConfigClass(2,# cores
                              4000,#steps per run
-                             800000, # total runs to create a model from
+                             8000, # total runs to create a model from
                              9508,#How many games to test with
                              [0.95],# learning rates 
-
-                             "reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
+                            "test game folder move"
+                             #"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
                              )
         
 

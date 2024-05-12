@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 import pickle
-from game.game_2 import TicTacToe
+from src.game.game_2 import TicTacToe
 import random
 from multi_processing_tools.multi_process_controller import multi_process_controller
 import logging
