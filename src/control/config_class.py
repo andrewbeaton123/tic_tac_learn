@@ -16,3 +16,4 @@ class ConfigClass(NamedTuple):
     test_games: int
     learning_rate: list
     run_name : str
+    lr_decay : float

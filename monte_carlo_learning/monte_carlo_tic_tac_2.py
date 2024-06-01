@@ -33,10 +33,9 @@ class MonteCarloAgent:
             return True
     def get_state(self, env):
         return env.board.reshape(-1)
+    
+
     def train(self, episodes):
-        
-        
-            
         self.learn(TicTacToe(1),episodes) ## Old Random implementationrandom.choice([1,2])
         if self.check_q_values():
             logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
