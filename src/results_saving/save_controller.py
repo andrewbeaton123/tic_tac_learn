@@ -7,10 +7,31 @@ from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 from src.file_mangement.directory_creator import create_directory
 
+def save_path_generator(run_var: RunVariableCreator,
+                        final_rate: float) -> str:
+    """
+    Generates and creates a directory path for saving run data.
+
+    This function creates a directory path based on the given run variable and final rate,
+    appending the current timestamp to ensure uniqueness. It then creates the directory
+    and returns the path.
+
+    Args:
+        run_var (RunVariableCreator): An instance of RunVariableCreator containing run-specific variables.
+        final_rate (float): The final learning rate to be included in the directory name.
+
+    Returns:
+        str: The path to the created directory.
+    """
+    save_time : str = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+    dir_save = f".//runs//games-{run_var.last_e_total}_learning_rate-{final_rate}_{save_time}//"
+
+    create_directory(dir_save)
+    return dir_save
 
 def save_results_core(
                       run_var: RunVariableCreator,
-                      rate: float,
+                      dir_save: str,
                       config: ConfigClass,
                     run_inital_rate: float,
                     agent_to_test : MonteCarloAgent ) -> None : 
@@ -27,10 +48,7 @@ def save_results_core(
             Returns:
             None
             """
-            save_time : str = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-            dir_save = f".//runs//games-{run_var.last_e_total}_learning_rate-{rate}_{save_time}//"
-
-            create_directory(dir_save)
+            
 
             run_metrics_path = f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{run_inital_rate}.pkl"
             with open(run_metrics_path, "wb") as f :

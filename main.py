@@ -18,9 +18,10 @@ from monte_carlo_learning.combine_q_value_dict import combine_q_values
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
-from src.results_saving.save_controller import save_results_core
+from src.results_saving.save_controller import save_results_core,save_path_generator
 from src.control.mlflow.create_experiment import create_mlflow_experiment
 from src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
+from src.result_plotter.plot_step_info import plot_step_info
 
 mlflow.set_tracking_uri("http://192.168.1.159:5000")
 def mc_create_run_instance(args) -> tuple[int,Dict]:
@@ -40,17 +41,21 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
-        total_games = 1200000
-        steps = 30.0
-        config = ConfigClass(4,# cores
-                             round(total_games/steps),#steps per run
-
-                             total_games, # total runs to create a model from
-                             9508,#How many games to test with
-                             [0.9],# learning rates 
+        total_games = int(25e3)
+        steps = 50#
+        cores = 10
+        lr = 0.9
+        lr_min = 0.5
+        lr_flat_gc =  2e5
+        run_name = f"Testing Extra logging {lr_flat_gc} flat"
+        config = ConfigClass(cores,# cores
+                            round(total_games/steps),#steps per run
+                            total_games, # total runs to create a model from
+                            9508,#How many games to test with
+                            [lr],# learning rates 
                             "Pre_training_test",
-                            round(0.86/steps,4)#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
-                             )
+                            round((lr-lr_min)/steps,4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
+                            lr_flat_gc)
         
 
 
@@ -73,9 +78,9 @@ def main():
                            )
         
         #TODO extract this code out and try and  make a base repeatable 
-        experiment_name  = "tic tac toe learning - Work Show"
+        experiment_name  = "tic tac toe learning - Static inital LR"
         mlflow.set_experiment(experiment_name)
-        run_name = "ml_flow_testing"
+        
         with mlflow.start_run(run_name=f"{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}"):
             log_named_tuple_as_params(config)
             for rate in tqdm(config.learning_rate, colour="green"):
@@ -110,14 +115,14 @@ def main():
                     #_-__-__-__-__-__-__-__-__-__-__-_
                     
                     t_before_train = time.time()
-                    
+
                     # learning rate scaling
-                    if run_var.last_e_total != 0 : 
+                    if run_var.last_e_total >= config.lr_flat_gc : 
                         
                         rate -= config.lr_decay# 0.1 #learning_rate_change*25
-                        if rate < 0.03: 
-                            rate = 0.03
-
+                        if rate < lr_min: 
+                            rate = lr_min
+                    mlflow.log_metric("Learning Rate", rate)
 
                     logging.info(f"Current learning rate is : {rate}")
                     multi_core_returns = multi_process_controller(mc_create_run_instance,
@@ -131,6 +136,7 @@ def main():
                     games_per_sec= round(config.steps/ time_taken_to_train)
 
                     run_var.training_rate.append(games_per_sec)
+                    mlflow.log_metric("Games Per Second", games_per_sec)
 
                     #_-__-__-__-__-__-__-__-__-__-__-_                    
                     logging.debug(f"Trained {config.steps} games over {config.cores} cores in {time_taken_to_train} seconds")
@@ -174,16 +180,25 @@ def main():
                                                                 total_wins,
                                                                 total_draws,
                                                                 config.test_games)
+                    
+
                 mlflow.log_metric("Final Win Rate", (total_wins/config.test_games)*100 )
                 mlflow.log_metric("Final Draw Rate", (total_draws/config.test_games)*100 )
                 mlflow.log_metric("Final Loss Rate", ((config.test_games - (total_draws +total_wins))/config.test_games)*100 )
                 mlflow.log_metric("Final Learning Rate", rate)
+
+                save_path = save_path_generator(run_var, rate)
                 save_results_core(run_var,
-                                rate,
+                                save_path,
                                 config,
                                 run_inital_rate,
                                 agent_to_test)
+                
+                plots_figures = plot_step_info(run_var,save_path)
 
+                for title, fig in plots_figures.items():
+                    mlflow.log_figure(fig,f"{title}.png")
+        
         return run_var.overall_res
 
 

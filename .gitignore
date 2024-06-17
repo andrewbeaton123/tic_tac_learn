@@ -3,3 +3,4 @@ tic_tac_env/
 *.pkl
 *.pickle
 ./venv
+/runs

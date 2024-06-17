@@ -17,3 +17,4 @@ class ConfigClass(NamedTuple):
     learning_rate: list
     run_name : str
     lr_decay : float
+    lr_flat_gc : float
