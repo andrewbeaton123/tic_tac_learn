@@ -18,3 +18,4 @@ class ConfigClass(NamedTuple):
     run_name : str
     lr_decay : float
     lr_flat_gc : float
+    step_lr_lowest : int

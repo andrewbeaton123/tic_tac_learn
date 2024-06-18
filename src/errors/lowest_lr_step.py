@@ -1,0 +1,3 @@
+
+class  LowestLearningRateStep(Exception):
+    pass

@@ -22,7 +22,7 @@ from src.results_saving.save_controller import save_results_core,save_path_gener
 from src.control.mlflow.create_experiment import create_mlflow_experiment
 from src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
 from src.result_plotter.plot_step_info import plot_step_info
-
+from src.errors import *
 mlflow.set_tracking_uri("http://192.168.1.159:5000")
 def mc_create_run_instance(args) -> tuple[int,Dict]:
     agent, episodes_in = args
@@ -41,21 +41,32 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
-        total_games = int(25e3)
+        total_games = int(25e6)
+
         steps = 50#
-        cores = 10
+        # Number of cores  used
+        cores = 1
+        #The starting learnign rate
         lr = 0.9
+        # The minimum learning rate that is used
         lr_min = 0.5
+        #THe number of games that the learning rate is held at its max value for
         lr_flat_gc =  2e5
-        run_name = f"Testing Extra logging {lr_flat_gc} flat"
+        #Controls the step at which the learning rate reachs its lowest value
+        step_lr_lowest: int = 30
+
+        if step_lr_lowest >steps:
+            raise LowestLearningRateStep("The lowest learning rate step size is greater than the number of steps")
+        run_name = f"Testing _ half penalty for draw Extra logging {lr_flat_gc} flat"
         config = ConfigClass(cores,# cores
                             round(total_games/steps),#steps per run
                             total_games, # total runs to create a model from
                             9508,#How many games to test with
                             [lr],# learning rates 
                             "Pre_training_test",
-                            round((lr-lr_min)/steps,4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
-                            lr_flat_gc)
+                            round((lr-lr_min)/(steps - step_lr_lowest),4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
+                            lr_flat_gc,
+                            step_lr_lowest)
         
 
 
@@ -78,7 +89,7 @@ def main():
                            )
         
         #TODO extract this code out and try and  make a base repeatable 
-        experiment_name  = "tic tac toe learning - Static inital LR"
+        experiment_name  = "Tic Tac Toe - ScoreV2"
         mlflow.set_experiment(experiment_name)
         
         with mlflow.start_run(run_name=f"{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}"):

@@ -60,7 +60,7 @@ class TicTacToe:
                 elif self.winner == 2:
                     return self.board, -1, True  # Player 2 wins
                 else:
-                    return self.board, 0, True  # Draw
+                    return self.board, -0.5, True  # Draw
             else:
                 return self.board, 0, False  # Game continues
         else:
