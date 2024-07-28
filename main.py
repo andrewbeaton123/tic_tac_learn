@@ -22,7 +22,7 @@ from src.results_saving.save_controller import save_results_core,save_path_gener
 from src.control.mlflow.create_experiment import create_mlflow_experiment
 from src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
 from src.result_plotter.plot_step_info import plot_step_info
-from src.errors import *
+
 mlflow.set_tracking_uri("http://192.168.1.159:5000")
 def mc_create_run_instance(args) -> tuple[int,Dict]:
     agent, episodes_in = args
@@ -41,32 +41,27 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
-        total_games = int(25e6)
-
+        total_games = int(2e6)
         steps = 50#
-        # Number of cores  used
-        cores = 1
-        #The starting learnign rate
-        lr = 0.9
-        # The minimum learning rate that is used
-        lr_min = 0.5
-        #THe number of games that the learning rate is held at its max value for
-        lr_flat_gc =  2e5
-        #Controls the step at which the learning rate reachs its lowest value
-        step_lr_lowest: int = 30
+        cores = 10
+        lr = 0.65
+        lr_min = 0.01
+        # gives a scalingto the lr so that the lr will drop to the 
+        #min value faster
+        lr_scaling =  1
+        lr_flat_gc =  4e4
 
-        if step_lr_lowest >steps:
-            raise LowestLearningRateStep("The lowest learning rate step size is greater than the number of steps")
-        run_name = f"Testing _ half penalty for draw Extra logging {lr_flat_gc} flat"
+        
+        run_name = f"Testing _ half penalty for draw Extra logging {lr_flat_gc} {lr_flat_gc} scaling to lr decay"
+        frozen_lr_steps = (lr_flat_gc / (total_games /50) )
         config = ConfigClass(cores,# cores
                             round(total_games/steps),#steps per run
                             total_games, # total runs to create a model from
-                            9508,#How many games to test with
+                            15000,#9508,#How many games to test with
                             [lr],# learning rates 
                             "Pre_training_test",
-                            round((lr-lr_min)/(steps - step_lr_lowest),4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
-                            lr_flat_gc,
-                            step_lr_lowest)
+                            round(lr_scaling*(lr-lr_min)/(steps-frozen_lr_steps),4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
+                            lr_flat_gc)
         
 
 
