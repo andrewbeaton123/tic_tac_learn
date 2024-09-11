@@ -41,7 +41,7 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
-        total_games = int(20e6)
+        total_games = int(200e6)
         steps = 50#
         cores = 20
         lr = 0.65
@@ -50,7 +50,7 @@ def main():
         #min value faster
         lr_scaling =  1
         lr_flat_gc =  2e6
-        experiment_name  = "Score V2 Large Scale "
+        experiment_name  = "Score V2 Large Scale - a75a6dcb582f5975aa9de5b2fbaceaf9f23b69cd"
         
         run_name = f"Prod - Large Scale - "
         frozen_lr_steps = (lr_flat_gc / (total_games /steps) )
