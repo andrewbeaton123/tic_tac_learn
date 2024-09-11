@@ -43,13 +43,13 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         total_games = int(2e6)
         steps = 50#
-        cores = 10
+        cores = 20
         lr = 0.65
         lr_min = 0.01
         # gives a scalingto the lr so that the lr will drop to the 
         #min value faster
         lr_scaling =  1
-        lr_flat_gc =  4e4
+        lr_flat_gc =  2e4
 
         
         run_name = f"Testing _ half penalty for draw Extra logging {lr_flat_gc} {lr_flat_gc} scaling to lr decay"
