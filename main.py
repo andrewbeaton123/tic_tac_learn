@@ -41,7 +41,7 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
-        total_games = int(2e6)
+        total_games = int(20e6)
         steps = 50#
         cores = 20
         lr = 0.65
@@ -49,11 +49,11 @@ def main():
         # gives a scalingto the lr so that the lr will drop to the 
         #min value faster
         lr_scaling =  1
-        lr_flat_gc =  2e4
-
+        lr_flat_gc =  2e6
+        experiment_name  = "Score V2 Large Scale "
         
-        run_name = f"Testing _ half penalty for draw Extra logging {lr_flat_gc} {lr_flat_gc} scaling to lr decay"
-        frozen_lr_steps = (lr_flat_gc / (total_games /50) )
+        run_name = f"Prod - Large Scale - "
+        frozen_lr_steps = (lr_flat_gc / (total_games /steps) )
         config = ConfigClass(cores,# cores
                             round(total_games/steps),#steps per run
                             total_games, # total runs to create a model from
@@ -84,10 +84,11 @@ def main():
                            )
         
         #TODO extract this code out and try and  make a base repeatable 
-        experiment_name  = "Tic Tac Toe - ScoreV2"
+      
         mlflow.set_experiment(experiment_name)
         
-        with mlflow.start_run(run_name=f"{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}"):
+        with mlflow.start_run(run_name=f"{run_name}"):
+            #{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}
             log_named_tuple_as_params(config)
             for rate in tqdm(config.learning_rate, colour="green"):
             
