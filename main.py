@@ -50,10 +50,11 @@ def main():
         #min value faster
         lr_scaling =  1
         lr_flat_gc =  2e6
-        experiment_name  = "Score V2 Large Scale - a75a6dcb582f5975aa9de5b2fbaceaf9f23b69cd"
+        experiment_name  = "Score V2 Large Scale - a4b323acc1c3e54d41693f7b3d4adb4f05219c6e"
         
         run_name = f"Prod - Large Scale - "
         frozen_lr_steps = (lr_flat_gc / (total_games /steps) )
+        step_lr_lowest = total_games - frozen_lr_steps
         config = ConfigClass(cores,# cores
                             round(total_games/steps),#steps per run
                             total_games, # total runs to create a model from
@@ -61,7 +62,8 @@ def main():
                             [lr],# learning rates 
                             "Pre_training_test",
                             round(lr_scaling*(lr-lr_min)/(steps-frozen_lr_steps),4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
-                            lr_flat_gc)
+                            lr_flat_gc,
+                            step_lr_lowest)
         
 
 
