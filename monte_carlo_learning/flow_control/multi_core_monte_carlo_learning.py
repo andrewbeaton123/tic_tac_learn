@@ -13,7 +13,7 @@ from monte_carlo_learning.combine_q_value_dict import combine_q_values
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 #tooling imports
-from src.control import Config_2
+from src.control import Config_2_MC
 from multi_processing_tools.multi_process_controller import multi_process_controller
 from src.results_saving.save_controller import save_results_core,save_path_generator
 from src.control.mlflow.create_experiment import create_mlflow_experiment
@@ -27,7 +27,7 @@ from .agent_creation import mc_create_run_instance, setup_mc_class
 
 def multi_core_monte_carlo_learning(all_possible_states):
     #{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}
-    conf = Config_2
+    conf = Config_2_MC
     log_named_tuple_as_params(conf)
     #~~~~~~~~~~~~~~~~~~~
         #Create Variables for the run

@@ -1,9 +1,9 @@
-class Config_2:
+class Config_2_MC:
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(Config_2, cls).__new__(cls, *args, **kwargs)
+            cls._instance = super(Config_2_MC, cls).__new__(cls, *args, **kwargs)
 
             cls._instance.experiment_name = "Tic Tac Learn Default Config"
             cls._instance.run_name = "Default Run"

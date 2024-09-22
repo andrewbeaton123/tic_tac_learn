@@ -1,4 +1,4 @@
-from .config_class_v2 import Config_2
+from .config_class_v2_MC import Config_2_MC
 
 
-all = ["Config_2"]
+all = ["Config_2_MC"]

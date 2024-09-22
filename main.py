@@ -23,7 +23,7 @@ from datetime import datetime
 # from src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
 # from src.result_plotter.plot_step_info import plot_step_info
 
-from src.control import Config_2
+from src.control import Config_2_MC
 from src.control.setup import pre_run_calculations_tasks
 
 mlflow.set_tracking_uri("http://192.168.1.159:5000")
@@ -31,34 +31,9 @@ mlflow.set_tracking_uri("http://192.168.1.159:5000")
 def main():
 
         #~~~~~~~~~~~~~~~~~~~
-        #Overall run settings 
+        #Overall run settings for Monte Carlo  
         #~~~~~~~~~~~~~~~~~~~
-        total_games = int(2e6)
-        steps = #
-        cores = 1
-        lr = 0.65
-        lr_min = 0.01
-        # gives a scalingto the lr so that the lr will drop to the 
-        #min value faster
-        lr_scaling =  1
-        lr_flat_gc =  2e6
-        experiment_name  = "Score V2 Large Scale - 9912b816ca5a31429f04f051e1d983ed1749c85c"
-        
-        
-        run_name = f"Prod - Large Scale - "
-        frozen_lr_steps = (lr_flat_gc / (total_games /steps) )
-        step_lr_lowest = total_games - frozen_lr_steps
-        """config = ConfigClass(cores,# cores
-                            round(total_games/steps),#steps per run
-                            total_games, # total runs to create a model from
-                            15000,#9508,#How many games to test with
-                            [lr],# learning rates 
-                            "Pre_training_test",
-                            round(lr_scaling*(lr-lr_min)/(steps-frozen_lr_steps),4),#"reduced decay rate and lower bounds for LR_min_0_01_subing_0.001"
-                            lr_flat_gc,
-                            step_lr_lowest)"""
-        
-        conf = Config_2
+        conf = Config_2_MC
         conf.total_games = int(2e6)
         conf.steps = 1
         conf.cores= 1
@@ -82,9 +57,7 @@ def main():
         mlflow.set_experiment(experiment_name)
         
         with mlflow.start_run(run_name=f"{conf.run_name}"):
-            
-        
-        
+              pass
 
 
 if __name__ == "__main__":
