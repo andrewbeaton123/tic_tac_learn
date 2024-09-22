@@ -54,7 +54,7 @@ def main():
        
         #TODO extract this code out and try and  make a base repeatable 
       
-        mlflow.set_experiment(experiment_name)
+        mlflow.set_experiment(conf.experiment_name)
         
         with mlflow.start_run(run_name=f"{conf.run_name}"):
               pass
