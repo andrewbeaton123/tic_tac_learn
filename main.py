@@ -23,6 +23,8 @@ from src.control.mlflow.create_experiment import create_mlflow_experiment
 from src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
 from src.result_plotter.plot_step_info import plot_step_info
 
+from src.control import Config_2
+
 mlflow.set_tracking_uri("http://192.168.1.159:5000")
 def mc_create_run_instance(args) -> tuple[int,Dict]:
     agent, episodes_in = args
@@ -41,16 +43,17 @@ def main():
         #~~~~~~~~~~~~~~~~~~~
         #Overall run settings 
         #~~~~~~~~~~~~~~~~~~~
-        total_games = int(200e6)
-        steps = 50#
-        cores = 20
+        total_games = int(2e6)
+        steps = #
+        cores = 1
         lr = 0.65
         lr_min = 0.01
         # gives a scalingto the lr so that the lr will drop to the 
         #min value faster
         lr_scaling =  1
         lr_flat_gc =  2e6
-        experiment_name  = "Score V2 Large Scale - a4b323acc1c3e54d41693f7b3d4adb4f05219c6e"
+        experiment_name  = "Score V2 Large Scale - 9912b816ca5a31429f04f051e1d983ed1749c85c"
+        
         
         run_name = f"Prod - Large Scale - "
         frozen_lr_steps = (lr_flat_gc / (total_games /steps) )
@@ -65,7 +68,14 @@ def main():
                             lr_flat_gc,
                             step_lr_lowest)
         
-
+        conf = Config_2
+        conf.total_games = int(2e6)
+        conf.steps = 1
+        conf.cores= 1
+        conf.learning_rate= 0.65
+        conf.learning_rate_min = 0.01
+        conf.learning_rate_scaling = 1
+        conf.learning_rate_flat_games = conf.total_games* 0.2
 
         #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
         #End of User editable variables 
@@ -89,10 +99,10 @@ def main():
       
         mlflow.set_experiment(experiment_name)
         
-        with mlflow.start_run(run_name=f"{run_name}"):
+        with mlflow.start_run(run_name=f"{conf.run_name}"):
             #{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}
             log_named_tuple_as_params(config)
-            for rate in tqdm(config.learning_rate, colour="green"):
+            for rate in tqdm(conf.learning_rate, colour="green"):
             
                 run_var.last_e_total = 0
                 run_inital_rate : float  = rate

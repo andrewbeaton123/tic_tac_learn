@@ -1,118 +1,42 @@
+# This code is a general plug and play of the behaviour of the 
+#monte carlo methods
+import torch
+import torch.nn as nn
+import torch.nn as nn
+
 import numpy as np
-import copy
 import pickle
-from src.game.game_2 import TicTacToe
-import random
-from multi_processing_tools.multi_process_controller import multi_process_controller
 import logging
 
-class MonteCarloAgent:
-    def __init__(self, epsilon, all_possible_states):
-        """
-        Initializes the Monte Carlo agent.
+class TicTacToeNet(nn.Module):
+    def __init__(self):
+        super(TicTacToeNet, self).__init__()
+        self.fc1 = nn.Linear(9, 128)  # Input layer 9, hidden layer 128 neurons
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(128, 64)  # Hidden layer 64 neurons
+        self.out = nn.Linear(64, 9)  # Output layer 9 (Q-values for 9 actions)
 
-        Args:
-            epsilon (float): The exploration rate.
-            all_possible_states (list): A list of all possible game states.
-        """
-        self.epsilon = epsilon
-        self.q_values = {}
-        self.returns = {}
-        self.all_possible_states = all_possible_states
-        
-        for state in self.all_possible_states:
-            self.q_values[state] = {}
-            board = np.reshape(list(state),(3,3))
-            env = TicTacToe(1,board)
-            for action in range(len(env.get_valid_moves())):  # 9 possible actions in a Tic Tac Toe game
-                self.q_values[state][action] = 0
-                self.returns[(state, action)] = []
+        # Initialize weights and biases
+        torch.nn.init.xavier_uniform_(self.fc1.weight)
+        torch.nn.init.zeros_(self.fc1.bias)
+        torch.nn.init.xavier_uniform_(self.fc2.weight)
+        torch.nn.init.zeros_(self.fc2.bias)  
+
+        torch.nn.init.xavier_uniform_(self.out.weight)  
+
+        torch.nn.init.zeros_(self.out.bias)
+    
 
     def load_q_values(self, q_values):
-        """
-        Loads pre-trained Q-values into the agent.
-
-        Args:
-            q_values (dict): A dictionary containing the pre-trained Q-values.
-        """
         self.q_values = q_values.copy()
 
-
-    def check_q_values(self) -> bool:
-        """
-        Checks if all Q-values are either 0 or None.
-
-        Returns:
-            bool: True if all Q-values are 0 or None, False otherwise.
-        """
-        # Check if all q_values are either 0 or None
-        
-        for key, value in self.q_values.items():
-            if not np.all(np.logical_or(value == 0, value is None)):
-                return False
-            return True
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        q_values = self.out(x)
+        return q_values
     
-
-    def get_state(self, env):
-        """
-        Gets the current state of the environment.
-
-        Args:
-            env (TicTacToe): The TicTacToe environment.
-
-        Returns:
-            tuple: A tuple representing the current state of the environment.
-        """
-        return env.board.reshape(-1)
     
-
-    def train(self, episodes):
-        """
-        Trains the agent for a given number of episodes.
-
-        Args:
-            episodes (int): The number of episodes to train for.
-        """
-        self.learn(TicTacToe(1),episodes) ## Old Random implementationrandom.choice([1,2])
-        if self.check_q_values():
-            logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
-            logging.info((next(iter(self.q_values.items()))[1]))
-    
-    def get_action(self, env):
-        """
-        Selects an action based on the current state and epsilon-greedy exploration.
-
-        Args:
-            env (TicTacToe): The TicTacToe environment.
-
-        Returns:
-            int: The selected action.
-        """
-        state = tuple(self.get_state(env))
-        if env.current_player == 1:
-            if np.random.rand() < self.epsilon:
-                return np.random.choice(list(self.q_values[state].keys()))
-            else:
-                logging.debug("get action - selecting move from q values")
-                logging.debug(f"get action - {self.q_values[state]}")
-                logging.debug("get action -  and  q states ")
-                return max(self.q_values[state], key=self.q_values[state].get)
-        else:
-                return np.random.choice(len(env.get_valid_moves()))
-
-    def update(self, env, state, action, reward):
-        """
-        Updates the Q-values based on the given state, action, and reward.
-
-        Args:
-            env (TicTacToe): The TicTacToe environment.
-            state (tuple): The current state of the environment.
-            action (int): The selected action.
-            reward (float): The reward received.
-        """
-        self.returns[(state, action)].append(reward)
-        self.q_values[state][action] = np.mean(self.returns[(state, action)])
-
     def learn(self, env, num_episodes):
         """
         Learns to play Tic Tac Toe through Monte Carlo tree search.
@@ -139,6 +63,53 @@ class MonteCarloAgent:
                 first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
                 G = sum(reward for _, _, reward in state_action_reward[first_idx:])
                 self.update(env, state, action, G)
+
+
+    def get_action(self, env):
+        state = torch.tensor(self.get_state(env)).float()  # Convert to tensor and float
+        q_values = self.net(state)  # Get Q-values from neural network
+        if env.current_player == 1:
+                if np.random.rand() < self.epsilon:
+                    return np.random.choice(list(self.q_values[state].keys()))
+                else:
+                    logging.debug("get action - selecting move from q values")
+                    logging.debug(f"get action - {self.q_values[state]}")
+                    logging.debug("get action -  and  q states ")
+                    return max(self.q_values[state], key=self.q_values[state].get)
+        else:
+                    return np.random.choice(len(env.get_valid_moves()))
+
+
+    def update(self, env, state, action, reward):
+            """
+            Updates the Q-values based on the given state, action, and reward.
+
+            Args:
+                env (TicTacToe): The TicTacToe environment.
+                state (tuple): The current state of the environment.
+                action (int): The selected action.
+                reward (float): The reward received.
+            """
+
+            # Calculate target Q-value
+            next_state = tuple(self.get_state(env))
+            if env.is_game_over():
+                target_q_value = reward
+            else:
+                next_state_tensor = torch.tensor(next_state).float()
+                next_q_values = self.net(next_state_tensor)
+                target_q_value = reward + self.gamma * next_q_values.max().item()
+
+            # Update Q-values
+            state_tensor = torch.tensor(state).float()
+            q_values = self.net(state_tensor)
+            q_values[action] = target_q_value
+
+            # Calculate loss and update network
+            loss = nn.MSELoss()(q_values.unsqueeze(0), target_q_value.unsqueeze(0))
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
     def serialize(self, filename="montecarlo.pkl"):
         """
@@ -169,7 +140,7 @@ class MonteCarloAgent:
             else:
                 return 0  # Draw
         return 0  # Continue playing, no immediate reward
-    
+      
 
     @classmethod
     def deserialize(cls, filename="montecarlo.pkl"):
