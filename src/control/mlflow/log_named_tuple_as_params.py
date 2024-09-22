@@ -1,11 +1,12 @@
 import mlflow
+from src.control import Config_2
 
-def log_named_tuple_as_params(named_tuple):
+def log_named_tuple_as_params(config: Config_2):
     """
     Log the fields of a named tuple as MLflow parameters.
 
     Parameters:
     named_tuple (NamedTuple): The named tuple to log.
     """
-    for field, value in named_tuple._asdict().items():
-        mlflow.log_param(field, value)
+    for attr_name, attr_value in config.__dict__.items():
+        mlflow.log_param(attr_name, attr_value)

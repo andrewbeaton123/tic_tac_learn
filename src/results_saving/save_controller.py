@@ -6,7 +6,7 @@ from src.control.config_class import ConfigClass
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 from src.file_mangement.directory_creator import create_directory
-
+from src.control import Config_2
 def save_path_generator(run_var: RunVariableCreator,
                         final_rate: float) -> str:
     """
@@ -32,7 +32,6 @@ def save_path_generator(run_var: RunVariableCreator,
 def save_results_core(
                       run_var: RunVariableCreator,
                       dir_save: str,
-                      config: ConfigClass,
                     run_inital_rate: float,
                     agent_to_test : MonteCarloAgent ) -> None : 
             """
@@ -49,7 +48,7 @@ def save_results_core(
             None
             """
             
-
+            config = Config_2
             run_metrics_path = f"{dir_save}//{config.run_name}_latest_overall_results_{run_var.last_e_total}_lr_{run_inital_rate}.pkl"
             with open(run_metrics_path, "wb") as f :
                 logging.info(f"Run metrics stored in : {run_metrics_path} \n")
