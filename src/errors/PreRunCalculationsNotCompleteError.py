@@ -1,0 +1,4 @@
+
+
+class PreRunCalculationsNotComplete(Exception):
+    pass

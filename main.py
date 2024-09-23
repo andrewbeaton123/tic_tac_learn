@@ -25,6 +25,7 @@ from datetime import datetime
 
 from src.control import Config_2_MC
 from src.control.setup import pre_run_calculations_tasks
+from monte_carlo_learning.flow_control import multi_core_monte_carlo_learning
 
 mlflow.set_tracking_uri("http://192.168.1.159:5000")
 
@@ -57,8 +58,8 @@ def main():
         mlflow.set_experiment(conf.experiment_name)
         
         with mlflow.start_run(run_name=f"{conf.run_name}"):
-              pass
+              multi_core_monte_carlo_learning(all_possible_states)
 
-
+              
 if __name__ == "__main__":
    res = main()

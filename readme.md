@@ -2,6 +2,7 @@
 
 
 ![Alt Text](https://i.makeagif.com/media/4-24-2016/N2q-9R.gif)
+
 This repository contains a Tic Tac Toe game that uses reinforcement learning techniques to train the game player. The ML approach uses Q-values, epsilon greedy selections, and multi-threading to learn and improve its gameplay.
 
 ## Reinforcement Learning
