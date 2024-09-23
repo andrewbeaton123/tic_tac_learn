@@ -158,7 +158,8 @@ def multi_core_monte_carlo_learning(all_possible_states):
                     save_path,
                     conf,
                     run_inital_rate,
-                    combined_agent)
+                    combined_agent,
+                    conf)
     
     plots_figures = plot_step_info(run_var,save_path)
 

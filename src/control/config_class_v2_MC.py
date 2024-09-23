@@ -27,7 +27,7 @@ class Config_2_MC:
     def pre_run_calculations(self): 
         #calculations  from user defined variables to code format
         # These must be run before the config class is used
-        self.frozen_learning_rate_steps = (self._instance.learning_rate_flat_game /
+        self.frozen_learning_rate_steps = (self._instance.learning_rate_flat_games /
                                             (self._instance.total_games  /self._instance.steps) )
         self._instance.games_per_step = self._instance.total_games /self._instance.steps
         

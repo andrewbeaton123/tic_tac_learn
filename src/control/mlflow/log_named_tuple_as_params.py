@@ -1,7 +1,7 @@
 import mlflow
-from src.control import Config_2
+from src.control import Config_2_MC
 
-def log_named_tuple_as_params(config: Config_2):
+def log_named_tuple_as_params(config: Config_2_MC):
     """
     Log the fields of a named tuple as MLflow parameters.
 
