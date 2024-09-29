@@ -113,6 +113,15 @@ class MonteCarloAgent:
         self.returns[(state, action)].append(reward)
         self.q_values[state][action] = np.mean(self.returns[(state, action)])
 
+    def choose_make_move(self,env):
+                
+        action = self.get_action(env) 
+        env.make_move(*env.get_valid_moves()[action])
+        #return state before move taken
+        #     
+        return action 
+    
+
     def learn(self, env, num_episodes):
         """
         Learns to play Tic Tac Toe through Monte Carlo tree search.
@@ -124,12 +133,18 @@ class MonteCarloAgent:
         for _ in range(num_episodes):
             env.reset()
             state_action_reward = []
+            
             while not env.is_game_over():
-                action = self.get_action(env) 
                 old_state = tuple(self.get_state(env))
+                # action  = choose_make_move(env)
+
+
+                action = self.get_action(env) 
                 logging.debug(f" valid moves are {env.get_valid_moves()}")
                 logging.debug(f" move is {action}")
                 env.make_move(*env.get_valid_moves()[action])
+
+                
                 reward =self.calculate_reward(env)
                 #This is old version of above
                 #-1 if env.is_game_over() and env.winner != 1 else 0

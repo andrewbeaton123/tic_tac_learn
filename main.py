@@ -29,13 +29,14 @@ def main():
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
       conf = Config_2_MC()
+      conf.run_name = " Lower starting Learning Rate"
       conf.total_games = int(2e6)
       conf.steps = 50
       conf.cores= 12
-      conf.learning_rate_start= 0.65
+      conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.01
-      conf.learning_rate_scaling = 1
-      conf.test_games_per_step = 1000
+      conf.learning_rate_scaling = 1.2
+      conf.test_games_per_step = 5000
       conf.learning_rate_flat_games = conf.total_games* 0.01
       
       

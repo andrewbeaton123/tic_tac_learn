@@ -1,6 +1,7 @@
 from datetime import datetime
 import pickle as pkl
 import logging
+import mlflow
 from src.control.run_variables import RunVariableCreator
 from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
@@ -59,3 +60,4 @@ def save_results_core(
             with open(combo_model_path,"wb") as f2:
                 logging.info(f"Combonation model stored in : {combo_model_path} \n")
                 pkl.dump(agent_to_test, f2)
+            mlflow.artifacts
