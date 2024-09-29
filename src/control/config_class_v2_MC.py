@@ -1,3 +1,6 @@
+import logging
+
+
 class Config_2_MC:
     _instance = None
 
@@ -10,7 +13,7 @@ class Config_2_MC:
             cls._instance.total_games = 200
             cls._instance.steps = 10
             cls._instance.cores = 1
-            cls._instance.learning_rate = 1
+            cls._instance.learning_rate_start = 1
             cls._instance.learning_rate_min = 0.01
             cls._instance.learning_rate_scaliing = 1
             cls._instance.learning_rate_flat_games = 0.1* cls._instance.total_games
@@ -18,28 +21,40 @@ class Config_2_MC:
             cls._instance.test_games_per_step = 1000
 
 
-            cls.frozen_learning_rate_steps = None
-            cls._instance.games_per_step = None
-            cls._instance.learning_rate_decay_rate = None
+            cls._instance._frozen_learning_rate_steps = None
+            cls._instance._games_per_step = None
+            cls._instance._learning_rate_decay_rate = None
         
         return cls._instance
     
     def pre_run_calculations(self): 
         #calculations  from user defined variables to code format
         # These must be run before the config class is used
-        self.frozen_learning_rate_steps = (self._instance.learning_rate_flat_games /
+        self._frozen_learning_rate_steps = (self._instance.learning_rate_flat_games /
                                             (self._instance.total_games  /self._instance.steps) )
-        self._instance.games_per_step = self._instance.total_games /self._instance.steps
         
-        self._instance.learning_rate_decay_rate = round( self._instance.learning_rate_scaliing*
-                                                        (self._instance.learning_rate -
+        
+
+        self.games_per_step = self._instance.total_games /self._instance.steps
+        
+        self.learning_rate_decay_rate = round( self._instance.learning_rate_scaliing*
+                                                        (self._instance.learning_rate_start -
                                                         self._instance.learning_rate_min
                                                         )/(self._instance.steps - 
                                                             self.frozen_learning_rate_steps),4)
-
+        
+        if self._frozen_learning_rate_steps < 1: 
+            self._frozen_learning_rate_steps =1
+        logging.info("Monte Carlo Pre run calculations finished.")
+        logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
+        logging.debug(f"games_per_step = {self.games_per_step}")
+        logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
 
     
-
+    @property
+    def frozen_learning_rate_steps(self) -> str:
+        """str: Gets the experiment name."""
+        return self._frozen_learning_rate_steps
     
     @property
     def run_name(self) -> str:
@@ -60,7 +75,7 @@ class Config_2_MC:
     @property
     def experiment_name(self) -> str:
         """str: Gets the experiment name."""
-        return self._experiment_name
+        return str(self._experiment_name)
 
     @experiment_name.setter
     def experiment_name(self, value: str) -> None:
@@ -114,12 +129,12 @@ class Config_2_MC:
         self._cores = value
 
     @property
-    def learning_rate(self) -> float:
+    def learning_rate_start(self) -> float:
         """float: Gets the learning rate."""
         return self._learning_rate
 
-    @learning_rate.setter
-    def learning_rate(self, value: float) -> None:
+    @learning_rate_start.setter
+    def learning_rate_start(self, value: float) -> None:
         """Sets the learning rate.
         
         Args:
