@@ -1,4 +1,6 @@
-tic_tac_env/
+
 *.pyc
 *.pkl
 *.pickle
+/runs
+**.venv/
