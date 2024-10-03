@@ -29,7 +29,7 @@ def main():
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
       conf = Config_2_MC()
-      conf.run_name = " Lower starting Learning Rate"
+      conf.run_name = " Testing Monte Carlo Agent Refactor"
       conf.total_games = int(2e6)
       conf.steps = 50
       conf.cores= 12

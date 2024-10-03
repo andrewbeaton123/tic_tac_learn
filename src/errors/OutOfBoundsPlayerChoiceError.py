@@ -1,0 +1,2 @@
+class OutOfBoundsPlayerChoice(Exception):
+    pass 

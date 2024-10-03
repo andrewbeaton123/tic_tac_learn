@@ -1,13 +1,154 @@
 import numpy as np
-import copy
 import pickle
-from src.game.game_2 import TicTacToe
-import random
-from multi_processing_tools.multi_process_controller import multi_process_controller
 import logging
+import random
 
+
+from typing import Dict
+
+from src.game.game_2 import TicTacToe
+from src import errors
+from multi_processing_tools.multi_process_controller import multi_process_controller
+
+class newagent:
+
+    def __init__(self, epsilon : float, all_possible_states: list):
+        self.epsilon : float = epsilon
+        self.q_values : Dict = {}
+        self.returns : Dict = {}
+        self.all_possible_states : list = all_possible_states
+
+    
+    def generate_q_value_space(self) -> None:
+        """
+        Initializes a Q-value space by iterating over all possible game states,
+        initializing empty dictionaries to store Q-values and returns for each state.
+
+        For each state, a Tic Tac Toe environment is created, and Q-values are initialized
+        for all 9 possible actions (i.e., moves).
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Side Effects:
+            Populates self.q_values with empty dictionaries for each state,
+                and initializes self.returns as an empty list for each (state, action) pair.
+        """
+
+        for state in self.all_possible_states:
+            self.q_values[state] = {}
+            board = np.reshape(list(state),(3,3))
+            env = TicTacToe(1,board)
+            for action in range(len(env.get_valid_moves())):  # 9 possible actions in a Tic Tac Toe game
+                self.q_values[state][action] = 0
+                self.returns[(state, action)] = []
+
+    def load_q_values(self, q_values):
+        """
+        Loads pre-trained Q-values into the agent.
+
+        Args:
+            q_values (dict): A dictionary containing the pre-trained Q-values.
+        """
+        self.q_values = q_values.copy()
+
+
+    def check_q_values(self) -> bool:
+        """
+        Checks if all Q-values are either 0 or None.
+
+        Returns:
+            bool: True if all Q-values are 0 or None, False otherwise.
+        """
+        # Check if all q_values are either 0 or None
+        
+        for key, value in self.q_values.items():
+            if not np.all(np.logical_or(value == 0, value is None)):
+                return False
+            return True
+    
+
+    def get_state(self, env):
+        """
+        Gets the current state of the environment.
+
+        Args:
+            env (TicTacToe): The TicTacToe environment.
+
+        Returns:
+            tuple: A tuple representing the current state of the environment.
+        """
+        return env.board.reshape(-1)
+    
+
+    def train(self, episodes, starting_player: int = 1):
+        """
+        Trains the agent for a given number of episodes.
+
+        Args:
+            episodes (int): The number of episodes to train for.
+        """
+        if starting_player >=1 and starting_player<=2:
+            self.learn(TicTacToe(starting_player),episodes) ## Old Random implementationrandom.choice([1,2])
+        else:
+            raise errors.OutOfBoundsPlayerChoice()
+    
+    def check_q_values_not_nan(self) -> None :
+
+        if self.check_q_values():
+            logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
+            logging.info((next(iter(self.q_values.items()))[1]))
+
+    def take_turn(self, env: TicTacToe) -> TicTacToe :  
+        
+        # take turn is something that happens inside of learn
+        while not env.is_game_over():
+            old_state = tuple(self.get_state(env))
+            action = self.get_action(env) 
+            logging.debug(f" valid moves are {env.get_valid_moves()}")
+            logging.debug(f" move is {action}")
+            env.make_move(*env.get_valid_moves()[action])  
+            
+        
+
+    def learn(self, env, num_episodes):
+        """
+        Learns to play Tic Tac Toe through Monte Carlo tree search.
+
+        Args:
+            env (TicTacToe): The TicTacToe environment.
+            num_episodes (int): The number of episodes to learn for.
+        """
+        for _ in range(num_episodes):
+            env.reset()
+            state_action_reward = []
+            
+            while not env.is_game_over():
+                old_state = tuple(self.get_state(env))
+                # action  = choose_make_move(env)
+
+
+                action = self.get_action(env) 
+                logging.debug(f" valid moves are {env.get_valid_moves()}")
+                logging.debug(f" move is {action}")
+                env.make_move(*env.get_valid_moves()[action])
+
+
+                reward =self.calculate_reward(env)
+
+                #This is old version of above
+                #-1 if env.is_game_over() and env.winner != 1 else 0
+                state_action_reward.append((old_state, action, reward))
+            
+            for state, action, _ in state_action_reward:
+                first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
+                G = sum(reward for _, _, reward in state_action_reward[first_idx:])
+                self.update(env, state, action, G)
 class MonteCarloAgent:
-    def __init__(self, epsilon, all_possible_states):
+    def __init__(self, epsilon, all_possible_states: list):
         """
         Initializes the Monte Carlo agent.
 
@@ -18,7 +159,7 @@ class MonteCarloAgent:
         self.epsilon = epsilon
         self.q_values = {}
         self.returns = {}
-        self.all_possible_states = all_possible_states
+        self.all_possible_state  = all_possible_states
         
         for state in self.all_possible_states:
             self.q_values[state] = {}
@@ -144,7 +285,7 @@ class MonteCarloAgent:
                 logging.debug(f" move is {action}")
                 env.make_move(*env.get_valid_moves()[action])
 
-                
+
                 reward =self.calculate_reward(env)
                 #This is old version of above
                 #-1 if env.is_game_over() and env.winner != 1 else 0
@@ -248,7 +389,7 @@ class MonteCarloAgent:
 
     def test(self
             ,num_tests:int =10000
-            ,cores:int=4) -> (int,int):
+            ,cores:int=2) -> (int,int):
         
         """Plays num_tests games of tic tac toe using the monte_carlo
         agent gready process against a random oponent
