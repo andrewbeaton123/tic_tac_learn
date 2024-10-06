@@ -36,7 +36,7 @@ def main():
       conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.01
       conf.learning_rate_scaling = 1.2
-      conf.test_games_per_step = 5000
+      conf.test_games_per_step = 3000
       conf.learning_rate_flat_games = conf.total_games* 0.01
       
       
