@@ -5,7 +5,6 @@ import random
 
 
 from typing import Dict
-
 from src.game.game_2 import TicTacToe
 from src import errors
 from multi_processing_tools.multi_process_controller import multi_process_controller
@@ -102,16 +101,46 @@ class newagent:
             logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
             logging.info((next(iter(self.q_values.items()))[1]))
 
+    def predict (self, env: TicTacToe) -> np.array: 
+        """Predict function that takes a TicTacToe game instance and 
+        selects the next move.
+        The aim is for this to allow for a mflow wrapper to work on the
+        agent
+        TODO : Decide if it is best to take in the tictactoe enviiromnent here
+        #it may be better to take in a list so that it is more ip capable
+
+        Args:
+            env (TicTacToe): Game ovject 
+
+        Raises:
+            errors.InvalidPredictionRequestDueToGameOver: If the game object is flagged as game over 
+            it will raise an error
+            errors.InvalidPredictionRequestDueToIncorrectGameObject : If the wrong game object is passed
+            then raise associated error 
+
+        Returns:
+            np.array: The selected move based on the policy of the agent
+        """
+        if not isinstance(env, TicTacToe):
+            raise errors.InvalidPredictionRequestDueToIncorrectGameObject("The wrong type of game object was passed to request")
+        
+        if not env.is_game_over():
+            return self.get_action(env)
+        
+        else: 
+            raise errors.InvalidPredictionRequestDueToGameOver("The requested predict is invalid as the game is over")
+            
     def take_turn(self, env: TicTacToe) -> TicTacToe :  
         
         # take turn is something that happens inside of learn
-        while not env.is_game_over():
+        if  not env.is_game_over():
             old_state = tuple(self.get_state(env))
             action = self.get_action(env) 
             logging.debug(f" valid moves are {env.get_valid_moves()}")
             logging.debug(f" move is {action}")
             env.make_move(*env.get_valid_moves()[action])  
-            
+        else : 
+            logging.debug(" montecarlo agent take turn exited as evn.is_game_over() was true")
         
 
     def learn(self, env, num_episodes):
