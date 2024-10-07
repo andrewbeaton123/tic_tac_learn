@@ -130,19 +130,48 @@ class newagent:
         else: 
             raise errors.InvalidPredictionRequestDueToGameOver("The requested predict is invalid as the game is over")
             
-    def take_turn(self, env: TicTacToe) -> TicTacToe :  
+    def take_turn(self, env: TicTacToe) -> tuple[TicTacToe,int] :  
         
         # take turn is something that happens inside of learn
-        if  not env.is_game_over():
-            old_state = tuple(self.get_state(env))
-            action = self.get_action(env) 
-            logging.debug(f" valid moves are {env.get_valid_moves()}")
-            logging.debug(f" move is {action}")
-            env.make_move(*env.get_valid_moves()[action])  
-        else : 
-            logging.debug(" montecarlo agent take turn exited as evn.is_game_over() was true")
+        action = self.get_action(env) 
+        logging.debug(f" valid moves are {env.get_valid_moves()}")
+        logging.debug(f" move is {action}")
+        env.make_move(*env.get_valid_moves()[action])  
+        return (env, action)
         
+    def update(self,reward_game_states: list[tuple]):
+        """
+        Updates the Q-values based on the given state, action, and reward.
 
+        Args:
+            
+            state (tuple): The current state of the environment.
+            action (int): The selected action.
+            reward (float): The reward received.
+        """
+        for state,action , total_reward  in reward_game_states:
+            self.returns[(state, action)].append(total_reward)
+            self.q_values[state][action] = np.mean(self.returns[(state, action)])  
+
+    def associate_reward_with_game_state(self,state_action_reward:list[tuple]) -> list[tuple] :
+        """gets the total reward for a game state and stores this in a list of tuples
+
+        Args:
+            state_action_reward (list[tuple]): un summed rewards 
+
+        Returns:
+            list[tuple]: Correctly summed rewards based on the satse and action taken 
+        """
+        reward_game_states =  []
+        for state, action, _ in state_action_reward:
+            first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
+            #total reward
+            G = sum(reward for _, _, reward in state_action_reward[first_idx:])
+            reward_game_states.append((state, action, G))
+        
+        return reward_game_states
+            
+    
     def learn(self, env, num_episodes):
         """
         Learns to play Tic Tac Toe through Monte Carlo tree search.
@@ -157,25 +186,17 @@ class newagent:
             
             while not env.is_game_over():
                 old_state = tuple(self.get_state(env))
-                # action  = choose_make_move(env)
 
-
-                action = self.get_action(env) 
-                logging.debug(f" valid moves are {env.get_valid_moves()}")
-                logging.debug(f" move is {action}")
-                env.make_move(*env.get_valid_moves()[action])
-
-
+                env, action  = self.take_turn(env)
                 reward =self.calculate_reward(env)
 
                 #This is old version of above
                 #-1 if env.is_game_over() and env.winner != 1 else 0
                 state_action_reward.append((old_state, action, reward))
-            
-            for state, action, _ in state_action_reward:
-                first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
-                G = sum(reward for _, _, reward in state_action_reward[first_idx:])
-                self.update(env, state, action, G)
+
+            summed_rewards_with_states = self.associate_reward_with_game_state(state_action_reward)
+            self.update(summed_rewards_with_states)
+
 class MonteCarloAgent:
     def __init__(self, epsilon, all_possible_states: list):
         """
