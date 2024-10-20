@@ -9,7 +9,7 @@ from src.game.game_2 import TicTacToe
 from src import errors
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
-class newagent:
+class MonteCarloAgent:
 
     def __init__(self, epsilon : float, all_possible_states: list):
         self.epsilon : float = epsilon
@@ -17,7 +17,18 @@ class newagent:
         self.returns : Dict = {}
         self.all_possible_states : list = all_possible_states
 
-    
+
+    def check_q_value_space_exists(self) -> None :
+        """Checks if the q_values dict is empty, if it is 
+        it populates the dict
+        """
+        logging.debug(f"The q vlaue dict length on checkigng was {len(self.q_values)}")
+
+        if len(self.q_values) == 0:
+
+            self.generate_q_value_space()
+
+
     def generate_q_value_space(self) -> None:
         """
         Initializes a Q-value space by iterating over all possible game states,
@@ -70,6 +81,7 @@ class newagent:
             return True
     
 
+   
     def get_state(self, env):
         """
         Gets the current state of the environment.
@@ -138,7 +150,29 @@ class newagent:
         logging.debug(f" move is {action}")
         env.make_move(*env.get_valid_moves()[action])  
         return (env, action)
-        
+    
+    def get_action(self, env):
+        """
+        Selects an action based on the current state and epsilon-greedy exploration.
+
+        Args:
+            env (TicTacToe): The TicTacToe environment.
+
+        Returns:
+            int: The selected action.
+        """
+        state = tuple(self.get_state(env))
+        if env.current_player == 1:
+            if np.random.rand() < self.epsilon:
+                return np.random.choice(list(self.q_values[state].keys()))
+            else:
+                logging.debug("get action - selecting move from q values")
+                logging.debug(f"get action - {self.q_values[state]}")
+                logging.debug("get action -  and  q states ")
+                return max(self.q_values[state], key=self.q_values[state].get)
+        else:
+                return np.random.choice(len(env.get_valid_moves()))
+
     def update(self,reward_game_states: list[tuple]):
         """
         Updates the Q-values based on the given state, action, and reward.
@@ -171,7 +205,26 @@ class newagent:
         
         return reward_game_states
             
+    def calculate_reward(self, env):
+        """
+        Calculates the reward based on the current game state.
+
+        Args:
+            env (TicTacToe): The TicTacToe environment.
+
+        Returns:
+            float: The reward.
+        """
+        if env.is_game_over():
+            if env.winner == 1:
+                return 1  # Player 1 wins
+            elif env.winner == 2:
+                return -1  # Player 2 wins
+            else:
+                return 0  # Draw
+        return 0  # Continue playing, no immediate reward
     
+
     def learn(self, env, num_episodes):
         """
         Learns to play Tic Tac Toe through Monte Carlo tree search.
@@ -196,8 +249,85 @@ class newagent:
 
             summed_rewards_with_states = self.associate_reward_with_game_state(state_action_reward)
             self.update(summed_rewards_with_states)
+        
+    def test(self
+            ,num_tests:int =10000
+            ,cores:int=2) -> (int,int):
+        
+        """Plays num_tests games of tic tac toe using the monte_carlo
+        agent gready process against a random oponent
+        
 
-class MonteCarloAgent:
+        Args:
+
+            agent (_type_, optional): The monte carlo based agent to play vs the 
+            random oponent 
+            num_tests int = The number of games to be played Defaults to 10000, 
+            cores:int=4 = The number of cores to split the games  across
+
+        Returns:
+            Tuple (int, int): total wins by the agent, total draws 
+        """
+        
+            #print(f"Agent won {wins} out of 10,000 games.")
+            #print(f"Draws: {draws}")
+        test_count_pc= int(num_tests/cores)
+        logging.debug("testing_agent - starting test for combined q's")
+        test_config = [(test_count_pc) for _ in range(cores) ]
+        total_wins, total_draws= 0,0
+        res_test_games = multi_process_controller(self.play_x_test_games,test_config,cores)
+        for multi_return_single in res_test_games:
+            wins_run, draw_run= multi_return_single
+            #logging.info(wins_run,draw_run)
+            total_wins += wins_run
+            total_draws += draw_run
+        return total_wins,total_draws
+    
+    
+    def play_x_test_games(self,
+                          num_games : int) -> tuple[int,int]:
+        """
+        Function to play 'x_games' number of Tic Tac Toe games and count the number of wins and draws.
+
+        Args:
+            num_games  (int): The number of games to be played.
+
+        Returns:
+            (int, int): A tuple containing the number of wins and draws respectively.
+
+        """
+
+        wins = 0
+        draws = 0
+
+        # Loop to play 'x_games' number of games
+        for _ in range(num_games ):
+
+            # Create a TicTacToe environment with a random player
+            env = TicTacToe(random.choice([1, 2]))
+
+            # Loop until the game is over
+            while not env.is_game_over():
+
+                # Decide the action based on the current player
+                if env.current_player == 1:
+                    action = self.get_action(env)
+                else:
+                    action = np.random.choice(len(env.get_valid_moves()))
+
+                # Make the selected move
+                env.make_move(*env.get_valid_moves()[action])
+
+            # Increment the wins and draws count based on the game outcome
+            if env.winner == 1:
+                wins += 1
+            elif env.winner == 0:
+                draws += 1
+
+        # Return the final count of wins and draws
+        return wins, draws
+    
+class MonteCarloAgent_old:
     def __init__(self, epsilon, all_possible_states: list):
         """
         Initializes the Monte Carlo agent.

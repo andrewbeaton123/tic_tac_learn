@@ -52,7 +52,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
     
    
     
-    run_var.last_e_total = 0
+    run_var.last_e_total  = 0
     run_inital_rate : float  = conf.learning_rate_start
     rate : float  = conf.learning_rate_start
     games_per_step = round(conf.total_games /conf.steps)
@@ -117,7 +117,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         #_-__-__-__-__-__-__-__-__-__-__-_
 
         
-        #for mc_return_single in multi_core_returns:
+        
 
         
         # Combine the Q values from multiple agents
