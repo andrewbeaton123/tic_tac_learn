@@ -64,7 +64,19 @@ class MonteCarloAgent:
             q_values (dict): A dictionary containing the pre-trained Q-values.
         """
         self.q_values = q_values.copy()
-
+        
+        
+    def generate_returns_space_only(self) -> None:
+        """
+        Creates the returns space for all possible moves. 
+        This should be used when loading in q states to 
+        ensure  that the returns space is also available
+        """
+        for state in self.all_possible_states:
+            board = np.reshape(list(state), (3,3))
+            env = TicTacToe(1,board)
+            for aciton in range(len(env.get_valid_moves())):
+                self.returns[(state,aciton)] = []
 
     def check_q_values(self) -> bool:
         """
@@ -118,7 +130,7 @@ class MonteCarloAgent:
         selects the next move.
         The aim is for this to allow for a mflow wrapper to work on the
         agent
-        TODO : Decide if it is best to take in the tictactoe enviiromnent here
+        TODO : Decide if it is best to take in the tictactoe enviromnent here
         #it may be better to take in a list so that it is more ip capable
 
         Args:

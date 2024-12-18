@@ -29,7 +29,7 @@ def main():
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
       conf = Config_2_MC()
-      conf.run_name = " Testing Monte Carlo Agent Refactor - Refactored train V1"
+      conf.run_name = " Testing Monte Carlo Agent Refactor - Medium Scale Testing "
       conf.total_games = int(2e6)
       conf.steps = 10
       conf.cores= 10
@@ -46,14 +46,12 @@ def main():
       #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
       
       
-      all_possible_states = pre_run_calculations_tasks()
-      
       #TODO extract this code out and try and  make a base repeatable 
       
       mlflow.set_experiment(experiment_name = f"{conf.experiment_name}")
       
       with mlflow.start_run(run_name=f"{conf.run_name}"):
-            multi_core_monte_carlo_learning(all_possible_states)
+            multi_core_monte_carlo_learning(pre_run_calculations_tasks())
 
               
 if __name__ == "__main__":

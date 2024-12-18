@@ -56,15 +56,15 @@ def multi_core_monte_carlo_learning(all_possible_states):
     run_inital_rate : float  = conf.learning_rate_start
     rate : float  = conf.learning_rate_start
     games_per_step = round(conf.total_games /conf.steps)
-    
-    
+
     #break the overall game count into steps 
     for episodes in tqdm(range(1,conf.total_games,games_per_step)):
         t_before_train = time.time()
         if episodes != 1:
             #Normal processing for learning by loading in stats and q values
-            combined_agent = MonteCarloAgent(rate, all_possible_states)
+            combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
             combined_agent.load_q_values(combined_q_values)
+            combined_agent.generate_returns_space_only()
             agents = [combined_agent for core in range(conf.cores)]
         else :
             #specific setup for first time run 
@@ -125,7 +125,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         combined_q_values = combine_q_values(agents)
 
         # Load the combined Q values into a new agent
-        combined_agent = MonteCarloAgent(rate, all_possible_states)
+        combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
         combined_agent.load_q_values(combined_q_values)
         #_-__-__-__-__-__-__-__-__-__-__-_            
         logging.debug("main- finshed q vlaue combination")
@@ -153,7 +153,8 @@ def multi_core_monte_carlo_learning(all_possible_states):
         mlflow.log_metric("In Progress Win Rate", (total_wins/conf.test_games_per_step)*100 , step = episodes)
         mlflow.log_metric("In Progress Draw Rate", (total_draws/conf.test_games_per_step)*100 , step = episodes)
         mlflow.log_metric("In Progress Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100, step = episodes )
-
+        mlflow.log_metric("In Progress Games Per Second",games_per_sec, step = episodes)
+        
     mlflow.log_metric("Final Win Rate", (total_wins/conf.test_games_per_step)*100 )
     mlflow.log_metric("Final Draw Rate", (total_draws/conf.test_games_per_step)*100 )
     mlflow.log_metric("Final Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100 )
