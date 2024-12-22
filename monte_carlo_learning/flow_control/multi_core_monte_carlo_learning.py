@@ -106,7 +106,6 @@ def multi_core_monte_carlo_learning(all_possible_states):
         games_per_sec= round(games_per_step/ time_taken_to_train)
 
         run_var.training_rate.append(games_per_sec)
-        mlflow.log_metric("Games Per Second", games_per_sec, step = episodes)
 
         #_-__-__-__-__-__-__-__-__-__-__-_                    
         logging.debug(f"Trained {games_per_step} games over {conf.cores} cores in {time_taken_to_train} seconds")
@@ -150,11 +149,12 @@ def multi_core_monte_carlo_learning(all_possible_states):
                                                     total_draws,
                                                     conf.test_games_per_step)
         
-        mlflow.log_metric("In Progress Win Rate", (total_wins/conf.test_games_per_step)*100 , step = episodes)
-        mlflow.log_metric("In Progress Draw Rate", (total_draws/conf.test_games_per_step)*100 , step = episodes)
-        mlflow.log_metric("In Progress Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100, step = episodes )
-        mlflow.log_metric("In Progress Games Per Second",games_per_sec, step = episodes)
-        
+        mlflow.log_metric("In Progress Win Rate", (total_wins/conf.test_games_per_step)*100 , step = episodes+games_per_step)
+        mlflow.log_metric("In Progress Draw Rate", (total_draws/conf.test_games_per_step)*100 , step = episodes+games_per_step)
+        mlflow.log_metric("In Progress Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100, step = episodes+games_per_step )
+        mlflow.log_metric("In Progress Games Per Second",games_per_sec, step = episodes+games_per_step)
+    
+    
     mlflow.log_metric("Final Win Rate", (total_wins/conf.test_games_per_step)*100 )
     mlflow.log_metric("Final Draw Rate", (total_draws/conf.test_games_per_step)*100 )
     mlflow.log_metric("Final Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100 )
