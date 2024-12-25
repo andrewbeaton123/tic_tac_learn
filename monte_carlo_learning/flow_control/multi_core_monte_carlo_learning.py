@@ -25,8 +25,10 @@ from src.control.run_variables import RunVariableCreator
 from .agent_creation import mc_create_run_instance, setup_mc_class
 from ..learning_rate_scaling import learning_rate_scaling
 
-
+#tracking imports 
+from monte_carlo_learning.tracking_tools import log_in_progress_mc_model
 import src.errors as errors
+
 def mc_computed_check(conf: Config_2_MC):
         # Checks that one of the computed feilds from the config is calculated
     #if not raise an error 
@@ -52,10 +54,10 @@ def multi_core_monte_carlo_learning(all_possible_states):
     
    
     
-    run_var.last_e_total  = 0
+    run_var.last_e_total: int  = 0
     run_inital_rate : float  = conf.learning_rate_start
     rate : float  = conf.learning_rate_start
-    games_per_step = round(conf.total_games /conf.steps)
+    games_per_step: int = round(conf.total_games /conf.steps)
 
     #break the overall game count into steps 
     for episodes in tqdm(range(1,conf.total_games,games_per_step)):
@@ -77,11 +79,12 @@ def multi_core_monte_carlo_learning(all_possible_states):
         logging.debug(f"main - Starting {episodes}")
         
         # steps to be given to each core
-        __steps_pc = int((games_per_step/conf.cores)+1)
-        logging.debug(f"Main - steps per core are  {__steps_pc}")
+        __steps_pc: int = int((games_per_step/conf.cores)+1)
         configs = [(agents[_c],__steps_pc) for _c in range(conf.cores)]
         
+
         #_-__-__-__-__-__-__-__-__-__-__-_
+        logging.debug(f"Main - steps per core are  {__steps_pc}")
         logging.debug("main - Finished generating configs ")
         logging.debug(f"main - cofig length is : {len(configs)}")
         logging.debug(f"main - episodes configs are {[e_s[0] for e_s in configs]}")
@@ -103,7 +106,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         time_taken_to_train = round(t_after_train - t_before_train,6)+1e-9
         
 
-        games_per_sec= round(games_per_step/ time_taken_to_train)
+        games_per_sec: int = round(games_per_step/ time_taken_to_train)
 
         run_var.training_rate.append(games_per_sec)
         mlflow.log_metric("Games Per Second", games_per_sec, step = episodes)
@@ -155,6 +158,8 @@ def multi_core_monte_carlo_learning(all_possible_states):
         mlflow.log_metric("In Progress Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100, step = episodes )
         mlflow.log_metric("In Progress Games Per Second",games_per_sec, step = episodes)
         
+        #save the in progress model
+        log_in_progress_mc_model(combined_agent, episodes)
     mlflow.log_metric("Final Win Rate", (total_wins/conf.test_games_per_step)*100 )
     mlflow.log_metric("Final Draw Rate", (total_draws/conf.test_games_per_step)*100 )
     mlflow.log_metric("Final Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100 )
