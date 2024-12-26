@@ -63,14 +63,16 @@ def multi_core_monte_carlo_learning(all_possible_states):
     for episodes in tqdm(range(1,conf.total_games,games_per_step)):
         t_before_train = time.time()
         if episodes != 1:
+            if conf.agent_load_path == None:
             #Normal processing for learning by loading in stats and q values
             combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
             combined_agent.load_q_values(combined_q_values)
             combined_agent.generate_returns_space_only()
             agents = [combined_agent for core in range(conf.cores)]
+            else:
+                #Call a function that loads an agent from pickle 
         else :
             #specific setup for first time run 
-            
             logging.debug(len(run_var.all_possible_states))
             agents = [setup_mc_class((run_var.all_possible_states,rate)
                                         )  for core in range (conf.cores)]

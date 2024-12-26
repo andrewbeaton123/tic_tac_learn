@@ -24,6 +24,8 @@ class Config_2_MC:
             cls._instance._frozen_learning_rate_steps = None
             cls._instance._games_per_step = None
             cls._instance._learning_rate_decay_rate = None
+
+            cls._instance._agent_load_path = None
         
         return cls._instance
     
@@ -50,6 +52,16 @@ class Config_2_MC:
         logging.debug(f"games_per_step = {self.games_per_step}")
         logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
 
+    @property
+    def agent_load_path(self) -> str:
+        return self._agent_load_path
+    
+    @agent_load_path.setter
+    def agent_load_path(self, agent_path) -> None: 
+        if not isinstance(agent_path, str):
+            raise ValueError("The agent path must be a string")
+        
+        self._agent_load_path = agent_path
     
     @property
     def frozen_learning_rate_steps(self) -> str:
