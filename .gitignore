@@ -3,4 +3,5 @@
 *.pkl
 *.pickle
 /runs
-**.venv/
+.*/
+tic_tac_env/
