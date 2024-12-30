@@ -19,7 +19,7 @@ from src.control.setup import pre_run_calculations_tasks
 from monte_carlo_learning.flow_control import multi_core_monte_carlo_learning
 
 # confiig basics 
-mlflow.set_tracking_uri("http://192.168.1.159:5000")
+mlflow.set_tracking_uri("http://homelab.mlflow")
 logging.basicConfig(level="INFO")
 
 
@@ -29,10 +29,11 @@ def main():
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
       conf = Config_2_MC()
-      conf.run_name = " Testing Monte Carlo Agent Refactor - Medium Scale Testing "
-      conf.total_games = int(2e6)
+      conf.run_name = " Testing Monte Carlo mlflow in progress model saves"
+      conf.experiment_name = "Tic Tac Dev"
+      conf.total_games = int(2e4)
       conf.steps = 10
-      conf.cores= 10
+      conf.cores= 4
       conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.01
       conf.learning_rate_scaling = 1.2

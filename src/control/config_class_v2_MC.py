@@ -1,5 +1,5 @@
 import logging
-
+from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 class Config_2_MC:
     _instance = None
@@ -25,7 +25,8 @@ class Config_2_MC:
             cls._instance._games_per_step = None
             cls._instance._learning_rate_decay_rate = None
 
-            cls._instance._agent_load_path = None
+            cls._instance._agent_reload = None
+
         
         return cls._instance
     
@@ -53,15 +54,19 @@ class Config_2_MC:
         logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
 
     @property
-    def agent_load_path(self) -> str:
-        return self._agent_load_path
+    def agent_reload(self) :
+        return self._agent_reload
     
-    @agent_load_path.setter
-    def agent_load_path(self, agent_path) -> None: 
-        if not isinstance(agent_path, str):
-            raise ValueError("The agent path must be a string")
+    @agent_reload.setter
+    def agent_reload(self, agent_object): 
+        """
+        This sets the agent reload varialbe if it is 
+        of the type montecarlo agent 
+        """
+        if not isinstance(agent_object, MonteCarloAgent) or isinstance(agent_object, type(None)):
+            raise ValueError("The agent path must be a Monte Carlo Agent")
         
-        self._agent_load_path = agent_path
+        self._agent_reload = agent_object
     
     @property
     def frozen_learning_rate_steps(self) -> str:

@@ -1,16 +1,11 @@
 import mlflow
 import logging
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
-
-
-def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int ) -> None:
-    logging.debug("Mc model in progress saving starting")
-    sci_format_episodes= f"{episodes:e}"
-    mlflow.save_model(agent, f"mc_agent/in-progress-{episodes}")
+import pickle 
+import os
+from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
+#from typing import TYPE_CHECKING
+#if TYPE_CHECKING:
+#    from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 
 def log_in_progress_mc_model(agent: "MonteCarloAgent", episodes: int) -> None:
@@ -42,8 +37,30 @@ def log_in_progress_mc_model(agent: "MonteCarloAgent", episodes: int) -> None:
     """
     logging.debug("Mc model in progress saving starting")
     sci_format_episodes = f"{episodes:e}"
+    artifact_path = f"mc_agent/in-progress-{sci_format_episodes}"
+    q_values_path = os.path.join("mc_agent", "saved_q_values.pkl")
+
+    # Ensure the directory exists
+    os.makedirs(artifact_path, exist_ok=True)
+
+    # Save the q_values to a file
+    with open(q_values_path, 'wb') as f:
+        pickle.dump(agent.q_values, f)
+    
     try:
-        mlflow.save_model(agent, f"mc_agent/in-progress-{sci_format_episodes}")
+        mlflow.pyfunc.save_model(
+            path=artifact_path,
+            python_model=agent,
+            artifacts={"q_values": q_values_path}
+        )
+        # Log the model artifact
+        mlflow.log_artifact(artifact_path)
+
+        # Register the model
+        model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
+        model_name = "MonteCarloAgent_in_progress_dev"
+        mlflow.register_model(model_uri=model_uri, name=model_name)
+
     except mlflow.exceptions.MlflowException as e:
         logging.error(f"Error saving model: {e}")
         raise # Re-raise to alert the calling function

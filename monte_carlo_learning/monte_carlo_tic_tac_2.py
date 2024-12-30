@@ -1,7 +1,9 @@
 import numpy as np
-import pickle
+#import pickle
 import logging
 import random
+import mlflow.pyfunc
+import pandas as pd 
 
 
 from typing import Dict
@@ -9,7 +11,7 @@ from src.game.game_2 import TicTacToe
 from src import errors
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
-class MonteCarloAgent:
+class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
     def __init__(self, epsilon : float, all_possible_states: list):
         self.epsilon : float = epsilon
@@ -179,34 +181,43 @@ class MonteCarloAgent:
             logging.info(f"In training of monte carlo models - Q values are all 0 or nan")
             logging.info((next(iter(self.q_values.items()))[1]))
 
-    def predict (self, env: TicTacToe) -> np.array: 
-        """Predict function that takes a TicTacToe game instance and 
-        selects the next move.
-        The aim is for this to allow for a mflow wrapper to work on the
-        agent
-        TODO : Decide if it is best to take in the tictactoe enviromnent here
-        #it may be better to take in a list so that it is more ip capable
+    
+    def load_context(self, context):
+        """
+        Load model artifacts, such as pre-trained Q-values, if saved in the MLflow model.
+        """
+        q_values_path = context.artifacts.get("q_values")
+        if q_values_path:
+            self.q_values = pd.read_pickle(q_values_path)
+
+    def predict (self, context, model_input: pd.DataFrame) -> pd.DataFrame: 
+        """
+        Generate predictions for input data.
 
         Args:
-            env (TicTacToe): Game ovject 
-
-        Raises:
-            errors.InvalidPredictionRequestDueToGameOver: If the game object is flagged as game over 
-            it will raise an error
-            errors.InvalidPredictionRequestDueToIncorrectGameObject : If the wrong game object is passed
-            then raise associated error 
+            context: MLflow context (unused here).
+            model_input: A pandas DataFrame containing the game state as input.
 
         Returns:
-            np.array: The selected move based on the policy of the agent
+            A pandas DataFrame with the predicted actions.
         """
-        if not isinstance(env, TicTacToe):
-            raise errors.InvalidPredictionRequestDueToIncorrectGameObject("The wrong type of game object was passed to request")
+        # Convert input DataFrame into the required format
+        game_states = model_input.to_numpy()
+        predictions = []
+
+        for state_array in game_states:
+            state = tuple(state_array)
+            env = TicTacToe(1, np.reshape(state, (3, 3)))
+
+            if not env.is_game_over():
+                action = self.get_action(env)
+                predictions.append(action)
+            else:
+
+                predictions.append(None)  # Invalid move as the game is over
+
+        return pd.DataFrame(predictions, columns=["predicted_action"])
         
-        if not env.is_game_over():
-            return self.get_action(env)
-        
-        else: 
-            raise errors.InvalidPredictionRequestDueToGameOver("The requested predict is invalid as the game is over")
             
     def take_turn(self, env: TicTacToe) -> tuple[TicTacToe,int] :  
         
