@@ -190,7 +190,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         if q_values_path:
             self.q_values = pd.read_pickle(q_values_path)
 
-    def predict (self, context, model_input: pd.DataFrame) -> pd.DataFrame: 
+    def predict (self, context, model_input): 
         """
         Generate predictions for input data.
 
@@ -202,6 +202,11 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             A pandas DataFrame with the predicted actions.
         """
         # Convert input DataFrame into the required format
+
+        # Ensure model_input is a pandas DataFrame
+        if not isinstance(model_input, pd.DataFrame):
+            raise TypeError("model_input must be a pandas DataFrame")
+        
         game_states = model_input.to_numpy()
         predictions = []
 

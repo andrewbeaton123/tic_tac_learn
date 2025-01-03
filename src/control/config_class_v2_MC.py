@@ -26,6 +26,7 @@ class Config_2_MC:
             cls._instance._learning_rate_decay_rate = None
 
             cls._instance._agent_reload = None
+            cls._instance.custom_model_name = "DefaultModelName" 
 
         
         return cls._instance
@@ -52,6 +53,22 @@ class Config_2_MC:
         logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
         logging.debug(f"games_per_step = {self.games_per_step}")
         logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
+
+    @property
+    def custom_model_name(self) -> str:
+        """str: Gets the custom model name."""
+        return self._custom_model_name
+    
+    @custom_model_name.setter
+    def custom_model_name(self, value: str) -> None:
+        """Sets the custom model name.
+        
+        Args:
+            value (str): The new custom model name.
+        """
+        self._custom_model_name = value
+
+        
 
     @property
     def agent_reload(self) :
