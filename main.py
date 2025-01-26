@@ -29,8 +29,8 @@ def main():
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
       conf = Config_2_MC()
-      conf.run_name = " Merge Testing Large Scale Testing "
-      conf.total_games = int(25e6)
+      conf.run_name = " Testing agent refactor "
+      conf.total_games = int(1e6)
       conf.experiment_name= "Tic Tac Learn"
       conf.steps = 10
       conf.cores= 10
