@@ -61,7 +61,7 @@ def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int) -> None:
 
         try:
             # Save the model with the q_values as an artifact
-            #TODO: add tagging options, model schema in  prep for inference
+            #TODO: add tagging options, model schema in  prep for inference need
             mlflow.pyfunc.save_model(
                 path=f"{temp_artifact_path}_model",
                 python_model=agent,
