@@ -7,12 +7,10 @@ from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from mlflow.exceptions import MlflowException
 from src.control.config_class_v2_MC import Config_2_MC
 
-#from typing import TYPE_CHECKING
-#if TYPE_CHECKING:
-#    from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 
-def log_in_progress_mc_model(agent: "MonteCarloAgent", episodes: int) -> None:
+
+def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int) -> None:
     """Logs and saves a Monte Carlo agent model during training.
 
     This function saves a snapshot of the Monte Carlo agent model to MLflow
@@ -56,10 +54,14 @@ def log_in_progress_mc_model(agent: "MonteCarloAgent", episodes: int) -> None:
 
         # Save the q_values to a file
         temp_q_values_path = os.path.join(temp_artifact_path, "saved_q_values.pkl")
+        
+        #write the q_values to a file
         with open(temp_q_values_path, 'wb') as f:
             pickle.dump(agent.q_values, f)
 
         try:
+            # Save the model with the q_values as an artifact
+            #TODO: add tagging options, model schema in  prep for inference
             mlflow.pyfunc.save_model(
                 path=f"{temp_artifact_path}_model",
                 python_model=agent,

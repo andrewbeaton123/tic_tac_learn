@@ -29,9 +29,9 @@ def main():
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
       conf = Config_2_MC()
-      conf.run_name = " Testing Monte Carlo mlflow in progress model saves - Tiny Test run"
+      conf.run_name = " mlflow in progress test"
       conf.experiment_name = "Tic Tac Dev"
-      conf.total_games = int(2e5)
+      conf.total_games = int(1e6)
       conf.steps = 10
       conf.cores= 8
       conf.learning_rate_start= 0.8
