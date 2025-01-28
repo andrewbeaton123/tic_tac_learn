@@ -1,5 +1,5 @@
 import numpy as np
-#import pickle
+import pickle
 import logging
 import random
 import mlflow.pyfunc
@@ -409,4 +409,3 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
         # Return the final count of wins and draws
         return wins, draws
-    
