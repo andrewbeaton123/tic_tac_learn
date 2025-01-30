@@ -28,6 +28,11 @@ def main():
       #~~~~~~~~~~~~~~~~~~~
       #Overall run settings for Monte Carlo  
       #~~~~~~~~~~~~~~~~~~~
+      #TODO: Test that the models in ml flow predicts work fine with the game.
+      #Make new repo that is the game using a trained model to pick the best move
+      # Need to think if I should split the game out as its going  to be something I would  need
+      # to be consistent for the models to use. The game would then be imported into the training code here 
+      # and then would be imported into the place where you can play against the model.
       conf = Config_2_MC()
       conf.run_name = " Testing agent refactor "
       conf.total_games = int(1e6)
