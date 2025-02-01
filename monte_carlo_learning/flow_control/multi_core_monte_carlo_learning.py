@@ -30,13 +30,19 @@ from monte_carlo_learning.tracking_tools import log_in_progress_mc_model
 import src.errors as errors
 
 def mc_computed_check(conf: Config_2_MC):
-        # Checks that one of the computed feilds from the config is calculated
-    #if not raise an error 
+    """
+    This function is used to check for pre-run calculations, in order to run the code. 
+    """   
     if conf.frozen_learning_rate_steps == None:
         raise errors.PreRunCalculationsNotComplete("Pre run calculations have not been  perfomred !")
 
 def multi_core_monte_carlo_learning(all_possible_states):
-    #{run_name}_starting_lr_{config.learning_rate[0]}_steps_{steps}_total_games_{total_games}
+    """
+    This function is used to perform monte carlo learning on multiple cores using the 
+    config file "Config_2_MC". It is not a general purpose function and can only be used with this 
+    specific config file.  The results of this learning process will be saved in the folder:
+        "../results/mc/current/frozen"
+    """   
     conf = Config_2_MC()
     log_named_tuple_as_params(conf)
     mc_computed_check(conf)
