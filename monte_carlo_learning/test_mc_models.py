@@ -1,4 +1,4 @@
-from game.game_2 import TicTacToe
+from tic_tac_toe_game.game import TicTacToe
 import logging
 from main import MonteCarloAgent, SuperCarloAgent,multi_process_controller
 

@@ -7,7 +7,7 @@ import pandas as pd
 
 
 from typing import Dict
-from src.game.game_2 import TicTacToe
+from tic_tac_toe_game.game import TicTacToe
 from src import errors
 from multi_processing_tools.multi_process_controller import multi_process_controller
 
