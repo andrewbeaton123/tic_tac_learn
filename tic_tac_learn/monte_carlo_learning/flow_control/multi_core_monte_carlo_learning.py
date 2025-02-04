@@ -2,8 +2,6 @@
 import logging
 import time
 import mlflow
-import numpy as np
-
 from tqdm import tqdm
 
 #first part imports 

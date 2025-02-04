@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tic_tac_learn"
+version = "0.1.0"
+dependencies = ["numpy","mlflow"]
+description = "Learning agent for tick tac toe game : https://github.com/andrewbeaton123/tic_tac_toe_game "
+authors = [{name = "Andrew Beaton"}]
+
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
