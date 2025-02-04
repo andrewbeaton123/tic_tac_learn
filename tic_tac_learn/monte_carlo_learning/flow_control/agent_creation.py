@@ -1,4 +1,4 @@
-from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
+from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from typing import Dict
 
 def mc_create_run_instance(args) -> tuple[int,Dict]:

@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 import logging
 import random
 import mlflow.pyfunc
@@ -8,8 +7,8 @@ import pandas as pd
 
 from typing import Dict
 from tic_tac_toe_game.game import TicTacToe
-from src import errors
-from multi_processing_tools.multi_process_controller import multi_process_controller
+from tic_tac_learn.src import errors
+from tic_tac_learn.multi_processing_tools.multi_process_controller import multi_process_controller
 
 class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
