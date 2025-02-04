@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-
+from tic_tac_learn.src.errors import SaveDirectoryAlreadyExistsError
 from tic_tac_learn.src.file_mangement.directory_creator import create_directory
 
 class  TestCreatDirectory(unittest.TestCase):
@@ -33,11 +33,12 @@ class  TestCreatDirectory(unittest.TestCase):
         mock_exists.return_value = True  # Simulate that the directory already exists
 
         # Act
-        create_directory(directory_path)
+        with self.assertRaises(SaveDirectoryAlreadyExistsError):
+            create_directory(directory_path)
 
         # Assert
         mock_exists.assert_called_once_with(directory_path)  # Check if os.path.exists was called with the correct path
-        mock_error.assert_called_once_with(f"Directory '{directory_path}' already exists.")  # Check if logging.error was called with the correct message
+        #mock_error.assert_called_once_with(f"Directory '{directory_path}' already exists.")  # Check if logging.error was called with the correct message
 
 
 
