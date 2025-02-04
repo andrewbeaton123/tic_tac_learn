@@ -12,8 +12,7 @@ from multiprocessing import Pool
 from datetime import datetime
 
 #local imports
-from src.control.config_class import ConfigClass
-from src.control.run_variables import RunVariableCreator
+
 from src.control import Config_2_MC
 from src.control.setup import pre_run_calculations_tasks
 from monte_carlo_learning.flow_control import multi_core_monte_carlo_learning
