@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 from tic_tac_learn.src.errors import SaveDirectoryAlreadyExistsError
 from tic_tac_learn.src.file_mangement.directory_creator import create_directory
 
-class  TestCreatDirectory(unittest.TestCase):
+class  TestCreateDirectory(unittest.TestCase):
     
     @patch("tic_tac_learn.src.file_mangement.directory_creator.os.makedirs")
     @patch("tic_tac_learn.src.file_mangement.directory_creator.os.path.exists")
@@ -27,6 +27,8 @@ class  TestCreatDirectory(unittest.TestCase):
 
     @patch('tic_tac_learn.src.file_mangement.directory_creator.logging.error')
     @patch('tic_tac_learn.src.file_mangement.directory_creator.os.path.exists')
+    
+    
     def test_create_directory_existing_directory(self, mock_exists, mock_error):
         # Arrange
         directory_path = '/path/to/existing/directory'

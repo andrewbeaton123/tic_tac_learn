@@ -143,7 +143,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         # Check if all q_values are either 0 or None
         
         for key, value in self.q_values.items():
-            if not np.all(np.logical_or(value == 0, value is None)):
+
+            if not np.all([np.logical_or(x ==0 , x is None )  for x in value]):
                 return False
             return True
     
