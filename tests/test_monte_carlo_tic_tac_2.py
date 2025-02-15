@@ -56,7 +56,8 @@ class TestMonteCarloTicTac2(unittest.TestCase):
         self.agent.generate_q_value_space()
         self.assertGreater(len(self.agent.q_values), 0)
         self.assertIn('000000000', self.agent.q_values)
-        self.assertIn(0, self.agent.q_values['000000000'])
+        print(self.agent.q_values['000000000'].keys())
+        self.assertIn(0, self.agent.q_values['000000000'].keys())
 
     def test_load_q_values(self):
         #sets the q values for the empty board for 2 of the moves
@@ -74,13 +75,13 @@ class TestMonteCarloTicTac2(unittest.TestCase):
     def test_check_q_values(self):
         #creates q values structure and sets the blank board 
         #triggers q check whihc looks for 0 or none
-        self.agent.q_values = {'000000000':  None}
+        self.agent.q_values = {'000000000':  [0, None]}
         self.assertTrue(self.agent.check_q_values())
 
         # sets the blank board to 1 and then triggers check q values 
         #which should be 0 or None
-        self.agent.q_values = {'000000000': {0: 1}}
-        #self.assertFalse(self.agent.check_q_values())
+        self.agent.q_values = {'000000000': [1]}
+        self.assertFalse(self.agent.check_q_values())
 
     def test_get_state(self):
         class MockEnv:
@@ -109,7 +110,7 @@ class TestMonteCarloTicTac2(unittest.TestCase):
         # asserts that sum of  the two rewards are assigned to the given board state
         state_action_reward = [('000000000', 0, 1), ('000000000', 0, 2)]
         result = self.agent.associate_reward_with_game_state(state_action_reward)
-        self.assertEqual(result, ('000000000', 0, 3))
+        self.assertEqual(result, [('000000000', 0, 3)])
 
     def test_update(self):
         #Test that the q values can be properly updated

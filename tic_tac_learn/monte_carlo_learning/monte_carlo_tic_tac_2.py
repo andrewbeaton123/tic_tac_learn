@@ -283,7 +283,9 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
             #total reward
             G = sum(reward for _, _, reward in state_action_reward[first_idx:])
-            reward_game_states.append((state, action, G))
+        #moved this indent in to here from inside the for loop
+        #I think this  is correct but I am not  100% sure
+        reward_game_states.append((state, action, G))
         
         return reward_game_states
             
