@@ -9,7 +9,7 @@ class TestMonteCarloTicTac2(unittest.TestCase):
     def setUp(self):
         #creates an agent that only has the possible states of filled or unfilled
         #The setup method is run first by unittest
-        self.agent = MonteCarloAgent(epsilon=0.1, all_possible_states=['000000000', '111111111'])
+        self.agent = MonteCarloAgent(epsilon=0.1, all_possible_states=[(0, 0, 0, 0, 0, 0, 0, 0, 0), (1, 1, 1, 1, 1, 1, 1, 1, 1)])
 
     def test_add_training_games_total(self):
         # Adds ten training games using the method and then ensures that
@@ -32,6 +32,7 @@ class TestMonteCarloTicTac2(unittest.TestCase):
         #then asserts that the trianing games total was set
         self.agent.agent_training_games_total = 20
         self.assertEqual(self.agent.agent_training_games_total, 20)
+        
 
         with self.assertRaises(TypeError):
             #chekcs that the training games errors when string is passed
@@ -55,9 +56,8 @@ class TestMonteCarloTicTac2(unittest.TestCase):
         # checks that the q value for the empty board space is set to 0 
         self.agent.generate_q_value_space()
         self.assertGreater(len(self.agent.q_values), 0)
-        self.assertIn('000000000', self.agent.q_values)
-        print(self.agent.q_values['000000000'].keys())
-        self.assertIn(0, self.agent.q_values['000000000'].keys())
+        self.assertIn((0, 0, 0, 0, 0, 0, 0, 0, 0), self.agent.q_values)
+        self.assertIn(0, self.agent.q_values[(0, 0, 0, 0, 0, 0, 0, 0, 0)].keys())
 
     def test_load_q_values(self):
         #sets the q values for the empty board for 2 of the moves
@@ -70,7 +70,7 @@ class TestMonteCarloTicTac2(unittest.TestCase):
         # calls the generator for the reward space
         self.agent.generate_returns_space_only()
         #ensures that the blank board space key and associated 
-        self.assertIn(('000000000', 0), self.agent.returns)
+        self.assertIn(((0, 0, 0, 0, 0, 0, 0, 0, 0), 0), self.agent.returns)
 
     def test_check_q_values(self):
         #creates q values structure and sets the blank board 

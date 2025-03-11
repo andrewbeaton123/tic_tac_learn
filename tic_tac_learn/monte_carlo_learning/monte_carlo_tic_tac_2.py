@@ -108,7 +108,9 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             board = np.reshape(list(state),(3,3))
             env = TicTacToe(1,board)
             for action in range(len(env.get_valid_moves())):  # 9 possible actions in a Tic Tac Toe game
+                # for each state each action option for this set q values be set to 0
                 self.q_values[state][action] = 0
+                #set the returns for state action tuple key to a list
                 self.returns[(state, action)] = []
 
     def load_q_values(self, q_values):
