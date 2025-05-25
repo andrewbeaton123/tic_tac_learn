@@ -1,7 +1,7 @@
 import mlflow
 
 import logging
-from src.control import Config_2_MC
+from tic_tac_learn.src.control import Config_2_MC
 
 
 

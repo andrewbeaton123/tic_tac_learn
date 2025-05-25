@@ -1,0 +1,13 @@
+Metadata-Version: 2.2
+Name: tic_tac_learn
+Version: 0.1.0
+Summary: Learning agent for tick tac toe game : https://github.com/andrewbeaton123/tic_tac_toe_game 
+Author: Andrew Beaton
+Requires-Dist: numpy
+Requires-Dist: mlflow
+Requires-Dist: tic_tac_toe_game@ git+https://github.com/andrewbeaton123/tic_tac_toe_game.git@223ac92c87e360b06ba3dca543a3f25202237c28
+Requires-Dist: tqdm
+Requires-Dist: recordclass
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"

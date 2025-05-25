@@ -2,10 +2,10 @@ from datetime import datetime
 import pickle as pkl
 import logging
 import mlflow
-from src.control.run_variables import RunVariableCreator
-from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
+from tic_tac_learn.src.control.run_variables import RunVariableCreator
+from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
-from src.file_mangement.directory_creator import create_directory
+from tic_tac_learn.src.file_mangement.directory_creator import create_directory
 
 def save_path_generator(run_var: RunVariableCreator,
                         final_rate: float) -> str:

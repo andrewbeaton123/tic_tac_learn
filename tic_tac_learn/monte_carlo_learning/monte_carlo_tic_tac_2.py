@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 import logging
 import random
 import mlflow.pyfunc
@@ -8,8 +7,8 @@ import pandas as pd
 
 from typing import Dict
 from tic_tac_toe_game.game import TicTacToe
-from src import errors
-from multi_processing_tools.multi_process_controller import multi_process_controller
+from tic_tac_learn.src import errors
+from tic_tac_learn.multi_processing_tools.multi_process_controller import multi_process_controller
 
 class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
@@ -109,7 +108,9 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             board = np.reshape(list(state),(3,3))
             env = TicTacToe(1,board)
             for action in range(len(env.get_valid_moves())):  # 9 possible actions in a Tic Tac Toe game
+                # for each state each action option for this set q values be set to 0
                 self.q_values[state][action] = 0
+                #set the returns for state action tuple key to a list
                 self.returns[(state, action)] = []
 
     def load_q_values(self, q_values):
@@ -144,7 +145,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         # Check if all q_values are either 0 or None
         
         for key, value in self.q_values.items():
-            if not np.all(np.logical_or(value == 0, value is None)):
+
+            if not np.all([np.logical_or(x ==0 , x is None )  for x in value]):
                 return False
             return True
     
@@ -283,7 +285,9 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
             #total reward
             G = sum(reward for _, _, reward in state_action_reward[first_idx:])
-            reward_game_states.append((state, action, G))
+        #moved this indent in to here from inside the for loop
+        #I think this  is correct but I am not  100% sure
+        reward_game_states.append((state, action, G))
         
         return reward_game_states
             

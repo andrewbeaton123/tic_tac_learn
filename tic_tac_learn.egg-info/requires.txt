@@ -1,0 +1,9 @@
+numpy
+mlflow
+tic_tac_toe_game@ git+https://github.com/andrewbeaton123/tic_tac_toe_game.git@223ac92c87e360b06ba3dca543a3f25202237c28
+tqdm
+recordclass
+
+[test]
+pytest
+pytest-cov

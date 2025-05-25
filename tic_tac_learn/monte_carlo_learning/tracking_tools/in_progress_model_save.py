@@ -3,9 +3,9 @@ import logging
 import pickle 
 import os
 import tempfile
-from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
+from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from mlflow.exceptions import MlflowException
-from src.control.config_class_v2_MC import Config_2_MC
+from tic_tac_learn.src.control.config_class_v2_MC import Config_2_MC
 
 
 

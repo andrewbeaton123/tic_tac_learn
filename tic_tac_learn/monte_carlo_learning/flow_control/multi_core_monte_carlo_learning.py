@@ -2,32 +2,30 @@
 import logging
 import time
 import mlflow
-import numpy as np
-
 from tqdm import tqdm
 
 #first part imports 
 
 #learning method imports 
-from monte_carlo_learning.combine_q_value_dict import combine_q_values
-from monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
+from tic_tac_learn.monte_carlo_learning.combine_q_value_dict import combine_q_values
+from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 #tooling imports
-from src.control import Config_2_MC
-from multi_processing_tools.multi_process_controller import multi_process_controller
-from src.results_saving.save_controller import save_results_core,save_path_generator
-from src.control.mlflow.create_experiment import create_mlflow_experiment
-from src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
-from src.result_plotter.plot_step_info import plot_step_info
-from src.control.run_variables import RunVariableCreator
+from tic_tac_learn.src.control import Config_2_MC
+from tic_tac_learn.multi_processing_tools.multi_process_controller import multi_process_controller
+from tic_tac_learn.src.results_saving.save_controller import save_results_core,save_path_generator
+from tic_tac_learn.src.control.mlflow.create_experiment import create_mlflow_experiment
+from tic_tac_learn.src.control.mlflow.log_named_tuple_as_params  import log_named_tuple_as_params
+from tic_tac_learn.src.result_plotter.plot_step_info import plot_step_info
+from tic_tac_learn.src.control.run_variables import RunVariableCreator
 
 #relative  imports 
 from .agent_creation import mc_create_run_instance, setup_mc_class
 from ..learning_rate_scaling import learning_rate_scaling
 
 #tracking imports 
-from monte_carlo_learning.tracking_tools import log_in_progress_mc_model
-import src.errors as errors
+from tic_tac_learn.monte_carlo_learning.tracking_tools import log_in_progress_mc_model
+import tic_tac_learn.src.errors as errors
 
 def mc_computed_check(conf: Config_2_MC):
     """
