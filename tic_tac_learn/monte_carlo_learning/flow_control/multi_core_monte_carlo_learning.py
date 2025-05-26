@@ -136,6 +136,9 @@ def multi_core_monte_carlo_learning(all_possible_states):
         combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
         combined_agent.load_q_values(combined_q_values)
         
+        # setting epsilon to 0 so that there ar eno random moves in the test 
+        test_agent = MonteCarloAgent(0.0, run_var.all_possible_states)
+        test_agent.load_q_values(combined_q_values)
         #_-__-__-__-__-__-__-__-__-__-__-_            
         logging.debug("main- finshed q vlaue combination")
         #_-__-__-__-__-__-__-__-__-__-__-_
@@ -143,7 +146,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
 
         
         #TODO This functionality exists inside the fo the agent already
-        total_wins, total_draws = combined_agent.test(
+        total_wins, total_draws = test_agent.test(
                                                     conf.test_games_per_step,
                                                     conf.cores)
         

@@ -271,24 +271,11 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             self.returns[(state, action)].append(total_reward)
             self.q_values[state][action] = np.mean(self.returns[(state, action)])  
 
-    def associate_reward_with_game_state(self,state_action_reward:list[tuple]) -> list[tuple] :
-        """gets the total reward for a game state and stores this in a list of tuples
-
-        Args:
-            state_action_reward (list[tuple]): un summed rewards 
-
-        Returns:
-            list[tuple]: Correctly summed rewards based on the satse and action taken 
-        """
-        reward_game_states =  []
-        for state, action, _ in state_action_reward:
-            first_idx = next(i for i, (st, ac, _) in enumerate(state_action_reward) if st == state and ac == action)
-            #total reward
-            G = sum(reward for _, _, reward in state_action_reward[first_idx:])
-        #moved this indent in to here from inside the for loop
-        #I think this  is correct but I am not  100% sure
-        reward_game_states.append((state, action, G))
-        
+    def associate_reward_with_game_state(self, state_action_reward: list[tuple]) -> list[tuple]:
+        reward_game_states = []
+        for idx, (state, action, _) in enumerate(state_action_reward):
+            G = sum(reward for _, _, reward in state_action_reward[idx:])
+            reward_game_states.append((state, action, G))
         return reward_game_states
             
     def calculate_reward(self, env):
@@ -307,7 +294,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             elif env.winner == 2:
                 return -1  # Player 2 wins
             else:
-                return 0  # Draw
+                return -0.5  # Draw
         return 0  # Continue playing, no immediate reward
     
 
