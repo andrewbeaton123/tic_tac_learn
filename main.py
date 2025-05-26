@@ -26,8 +26,8 @@ def main():
       # to be consistent for the models to use. The game would then be imported into the training code here 
       # and then would be imported into the place where you can play against the model.
       conf = Config_2_MC()
-      conf.run_name = "Test after change to format of the sum returns 3"
-      conf.total_games = int(1e5)
+      conf.run_name = "Test after change of predict return"
+      conf.total_games = int(1e6)
       conf.experiment_name= "Tic Tac Learn"
       conf.steps = 10
       conf.cores= 8
@@ -37,7 +37,7 @@ def main():
       conf.test_games_per_step = 3000
       conf.learning_rate_flat_games = conf.total_games* 0.01
 
-      conf.custom_model_name = "restructure_test"
+      conf.custom_model_name = "Final Model as artifact"
       
       
       

@@ -10,7 +10,7 @@ from tic_tac_learn.src.control.config_class_v2_MC import Config_2_MC
 
 
 
-def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int) -> None:
+def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int, final_epoch: bool ) -> None:
     """Logs and saves a Monte Carlo agent model during training.
 
     This function saves a snapshot of the Monte Carlo agent model to MLflow
@@ -49,7 +49,7 @@ def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int) -> None:
     
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_artifact_path = os.path.join(temp_dir, artifact_path)
+        temp_artifact_path = os.path.join(temp_dir, artifact_path).replace(".","_")
         os.makedirs(temp_artifact_path, exist_ok=True)
 
         # Save the q_values to a file
@@ -70,10 +70,10 @@ def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int) -> None:
 
             # Log the model artifact
             mlflow.log_artifact(temp_artifact_path)
-
-            # Register the model
-            model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-            mlflow.register_model(model_uri=model_uri, name=custom_model_name)
+            if final_epoch:
+                # Register the model
+                model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
+                mlflow.register_model(model_uri=model_uri, name=custom_model_name)
 
         except MlflowException as e:
             logging.error(f"Error saving model: {e}")

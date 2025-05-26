@@ -84,7 +84,6 @@ def multi_core_monte_carlo_learning(all_possible_states):
         
 
         logging.debug(f"main - Starting {episodes}")
-        
         # steps to be given to each core
         __steps_pc: int = int((games_per_step/conf.cores)+1)
         configs = [(agents[_c],__steps_pc) for _c in range(conf.cores)]
@@ -136,6 +135,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         # Load the combined Q values into a new agent
         combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
         combined_agent.load_q_values(combined_q_values)
+        
         #_-__-__-__-__-__-__-__-__-__-__-_            
         logging.debug("main- finshed q vlaue combination")
         #_-__-__-__-__-__-__-__-__-__-__-_
@@ -153,7 +153,11 @@ def multi_core_monte_carlo_learning(all_possible_states):
         #print(f"Agent won {total_wins} out of {config.test_games} games.")
         print(f"Winrate is {round((total_wins/conf.test_games_per_step)*100)}%")
         print(f"Games drawn {total_draws}")
-
+        #logs the 
+        log_in_progress_mc_model(combined_agent, 
+                                 run_var.last_e_total, 
+                                 bool(run_var.last_e_total>= conf.total_games) )
+        
         run_var.overall_res[run_var.last_e_total] = (rate,
                                                     total_wins,
                                                     total_draws,

@@ -5,7 +5,7 @@ import mlflow.pyfunc
 import pandas as pd 
 
 
-from typing import Dict
+from typing import Dict, List
 from tic_tac_toe_game.game import TicTacToe
 from tic_tac_learn.src import errors
 from tic_tac_learn.multi_processing_tools.multi_process_controller import multi_process_controller
@@ -192,7 +192,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         if q_values_path:
             self.q_values = pd.read_pickle(q_values_path)
 
-    def predict (self, context, model_input): 
+    def predict (self, context, model_input) -> List: 
         """
         Generate predictions for input data.
 
@@ -223,7 +223,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
                 predictions.append(None)  # Invalid move as the game is over
 
-        return pd.DataFrame(predictions, columns=["predicted_action"])
+        return predictions
         
             
     def take_turn(self, env: TicTacToe) -> tuple[TicTacToe,int] :  
