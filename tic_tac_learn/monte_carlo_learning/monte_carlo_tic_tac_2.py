@@ -232,7 +232,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         action = self.get_action(env) 
         logging.debug(f" valid moves are {env.get_valid_moves()}")
         logging.debug(f" move is {action}")
-        env.make_move(*env.get_valid_moves()[action])  
+        env.make_move(*env.get_valid_moves()[action])
         return (env, action)
     
     def get_action(self, env):
@@ -246,16 +246,21 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             int: The selected action.
         """
         state = tuple(self.get_state(env))
+        valid_moves = env.get_valid_moves()
+        valid_indices = [move[0]*3 + move[1] for move in valid_moves]  # board index 0-8
+
         if env.current_player == 1:
             if np.random.rand() < self.epsilon:
-                return np.random.choice(list(self.q_values[state].keys()))
+                action = np.random.choice(valid_indices)
             else:
-                logging.debug("get action - selecting move from q values")
-                logging.debug(f"get action - {self.q_values[state]}")
-                logging.debug("get action -  and  q states ")
-                return max(self.q_values[state], key=self.q_values[state].get)
+                # Only consider Q-values for valid actions
+                q_vals = {a: self.q_values[state][a] for a in valid_indices}
+                action = max(q_vals, key=q_vals.get)
+            # Map action (0-8) to move coordinates
+            move_idx = valid_indices.index(action)
+            return move_idx  # index in valid_moves
         else:
-                return np.random.choice(len(env.get_valid_moves()))
+            return np.random.choice(len(valid_moves))
 
     def update(self,reward_game_states: list[tuple]):
         """
