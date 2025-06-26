@@ -120,6 +120,32 @@ class TestMonteCarloTicTac2(unittest.TestCase):
         self.agent.update(reward_game_states)
         self.assertEqual(self.agent.q_values['000000000'][0], 1)
 
+        def test_convert_valid_move_to_board_index(self):
+            # Test with a single move
+            moves = ((0, 0),)
+            indices = self.agent.convert_valid_move_to_board_index(moves)
+            self.assertEqual(indices, [0])
+
+            # Test with multiple moves
+            moves = ((0, 0), (1, 1), (2, 2))
+            indices = self.agent.convert_valid_move_to_board_index(moves)
+            self.assertEqual(indices, [0, 4, 8])
+
+            # Test with all possible moves on a 3x3 board
+            moves = tuple((i, j) for i in range(3) for j in range(3))
+            indices = self.agent.convert_valid_move_to_board_index(moves)
+            self.assertEqual(indices, list(range(9)))
+
+            # Test with empty tuple
+            moves = ()
+            indices = self.agent.convert_valid_move_to_board_index(moves)
+            self.assertEqual(indices, [])
+
+            # Test with non-square moves (should still work for 3x3 logic)
+            moves = ((0, 2), (2, 0))
+            indices = self.agent.convert_valid_move_to_board_index(moves)
+            self.assertEqual(indices, [2, 6])
+
 if __name__ == '__main__':
     unittest.main()
 

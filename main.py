@@ -26,16 +26,17 @@ def main():
       # to be consistent for the models to use. The game would then be imported into the training code here 
       # and then would be imported into the place where you can play against the model.
       conf = Config_2_MC()
-      conf.run_name = "Test fix to reward and test games - 1e6 - draw negative reward - lower Lr- larger lr scaling "
-      conf.total_games = int(3e6)
+      conf.run_name = "one gamestep  one core- 1e6 - draw negative reward - lower Lr"
+
+      conf.total_games = int(4e6)
       conf.experiment_name= "Tic Tac Learn"
       conf.steps = 20
-      conf.cores= 6
+      conf.cores= 2
       conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.001
-      conf.learning_rate_scaling = 5
+      conf.learning_rate_scaling = 1
       conf.test_games_per_step = 3000
-      conf.learning_rate_flat_games = conf.total_games* 0.01
+      conf.learning_rate_flat_games = conf.total_games* 0.2
 
       conf.custom_model_name = "Final Model as artifact"
       

@@ -7,7 +7,7 @@ from tqdm import tqdm
 #first part imports 
 
 #learning method imports 
-from tic_tac_learn.monte_carlo_learning.combine_q_value_dict import combine_q_values
+from tic_tac_learn.monte_carlo_learning.combine_q_value_dict import combine_q_values,combine_returns_max
 from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 #tooling imports
@@ -61,7 +61,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
     run_var.last_e_total: int  = 0
     run_inital_rate : float  = conf.learning_rate_start
     rate : float  = conf.learning_rate_start
-    games_per_step: int = round(conf.total_games /conf.steps)
+    games_per_step: int = int(conf.total_games /conf.steps)
 
     #break the overall game count into steps 
     for episodes in tqdm(range(1,conf.total_games,games_per_step)):
@@ -130,7 +130,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         
         # Combine the Q values from multiple agents
         agents = multi_core_returns # Replace with your actual agents
-        combined_q_values = combine_q_values(agents)
+        combined_q_values = combine_returns_max(agents)#combine_q_values(agents)
 
         # Load the combined Q values into a new agent
         combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)

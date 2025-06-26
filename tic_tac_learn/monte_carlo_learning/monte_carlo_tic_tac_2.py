@@ -21,6 +21,22 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         # This is to server as a training game count between different training
         #runs for the same agent
         self._agent_training_games_total : int = 0
+    
+    def convert_valid_move_to_board_index(self, 
+                                          move_tuple: tuple) -> list : 
+        """
+        Converts a tuple of valid move coordinates to their corresponding board indices.
+        Each move is represented as a (row, column) tuple, and the board is assumed to be a 3x3 grid.
+        The board index is calculated as (row * 3 + column) for each move.
+        Args:
+            move_tuple (tuple): A tuple containing (row, column) pairs representing valid moves.
+        Returns:
+            list: A list of integers representing the corresponding board indices for each move.
+        """
+        
+
+        return [int(move[0]*3 + move[1]) for move in move_tuple ]
+    
 
     def _add_to_training_games_total(self, training_games: int ) -> None: 
         """Adds a number of training games to the total count.
@@ -105,13 +121,13 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
         for state in self.all_possible_states:
             self.q_values[state] = {}
-            board = np.reshape(list(state),(3,3))
-            env = TicTacToe(1,board)
-            for action in range(len(env.get_valid_moves())):  # 9 possible actions in a Tic Tac Toe game
-                # for each state each action option for this set q values be set to 0
-                self.q_values[state][action] = 0
-                #set the returns for state action tuple key to a list
-                self.returns[(state, action)] = []
+            board = np.reshape(list(state), (3, 3))
+            env = TicTacToe(1, board)
+            valid_moves = env.get_valid_moves()
+            for move in valid_moves:
+                action_index = int(move[0]*3 + move[1])  # ensure Python int
+                self.q_values[state][action_index] = 0
+                self.returns[(state, action_index)] = []
 
     def load_q_values(self, q_values):
         """
@@ -130,10 +146,12 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         ensure  that the returns space is also available
         """
         for state in self.all_possible_states:
-            board = np.reshape(list(state), (3,3))
-            env = TicTacToe(1,board)
-            for aciton in range(len(env.get_valid_moves())):
-                self.returns[(state,aciton)] = []
+            board = np.reshape(list(state), (3, 3))
+            env = TicTacToe(1, board)
+            valid_moves = env.get_valid_moves()
+            for move in valid_moves:
+                action_index = move[0]*3 + move[1]
+                self.returns[(state, action_index)] = []
 
     def check_q_values(self) -> bool:
         """
@@ -162,7 +180,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         Returns:
             tuple: A tuple representing the current state of the environment.
         """
-        return env.board.reshape(-1)
+        return tuple(int(x) for x in env.board.reshape(-1))
     
 
     def train(self, episodes, starting_player: int = 1):
@@ -230,10 +248,14 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         
         # take turn is something that happens inside of learn
         action = self.get_action(env) 
+        valid_moves = env.get_valid_moves()
+        valid_boad_indices = [int(idx) for idx in self.convert_valid_move_to_board_index(valid_moves)]
+        action = int(action)
+        move_index = valid_boad_indices.index(action)
         logging.debug(f" valid moves are {env.get_valid_moves()}")
         logging.debug(f" move is {action}")
-        env.make_move(*env.get_valid_moves()[action])
-        return (env, action)
+        env.make_move(*valid_moves[move_index])
+        return env, action
     
     def get_action(self, env):
         """
@@ -247,7 +269,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         """
         state = tuple(self.get_state(env))
         valid_moves = env.get_valid_moves()
-        valid_indices = [move[0]*3 + move[1] for move in valid_moves]  # board index 0-8
+        valid_indices = [int(move[0]*3 + move[1]) for move in valid_moves]  # ensure Python int
 
         if env.current_player == 1:
             if np.random.rand() < self.epsilon:
@@ -256,11 +278,10 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
                 # Only consider Q-values for valid actions
                 q_vals = {a: self.q_values[state][a] for a in valid_indices}
                 action = max(q_vals, key=q_vals.get)
-            # Map action (0-8) to move coordinates
-            move_idx = valid_indices.index(action)
-            return move_idx  # index in valid_moves
+                
+            return action  # index in valid_moves
         else:
-            return np.random.choice(len(valid_moves))
+            return np.random.choice(valid_indices)
 
     def update(self,reward_game_states: list[tuple]):
         """
@@ -272,7 +293,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             action (int): The selected action.
             reward (float): The reward received.
         """
-        for state,action , total_reward  in reward_game_states:
+        for state, action, total_reward in reward_game_states:
+            action = int(action)
             self.returns[(state, action)].append(total_reward)
             self.q_values[state][action] = np.mean(self.returns[(state, action)])  
 
@@ -299,7 +321,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             elif env.winner == 2:
                 return -1  # Player 2 wins
             else:
-                return -0.5  # Draw
+                return -0.1  # Draw
         return 0  # Continue playing, no immediate reward
     
 
@@ -331,7 +353,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         
     def test(self
             ,num_tests:int =10000
-            ,cores:int=2) -> (int,int):
+            ,cores:int=2) -> tuple[int,int]:
         
         """Plays num_tests games of tic tac toe using the monte_carlo
         agent gready process against a random oponent
@@ -363,45 +385,28 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         return total_wins,total_draws
     
     
-    def play_x_test_games(self,
-                          num_games : int) -> tuple[int,int]:
-        """
-        Function to play 'x_games' number of Tic Tac Toe games and count the number of wins and draws.
-
-        Args:
-            num_games  (int): The number of games to be played.
-
-        Returns:
-            (int, int): A tuple containing the number of wins and draws respectively.
-
-        """
-
+    def play_x_test_games(self, num_games: int) -> tuple[int, int]:
         wins = 0
         draws = 0
 
-        # Loop to play 'x_games' number of games
-        for _ in range(num_games ):
-
-            # Create a TicTacToe environment with a random player
+        for _ in range(num_games):
             env = TicTacToe(random.choice([1, 2]))
-
-            # Loop until the game is over
             while not env.is_game_over():
-
-                # Decide the action based on the current player
                 if env.current_player == 1:
                     action = self.get_action(env)
+                    valid_moves = env.get_valid_moves()
+                    valid_boad_indices = [int(idx) for idx in self.convert_valid_move_to_board_index(valid_moves)]
+                    action = int(action)
+                    move_index = valid_boad_indices.index(action)
+                    env.make_move(*valid_moves[move_index])
                 else:
-                    action = np.random.choice(len(env.get_valid_moves()))
+                    valid_moves = env.get_valid_moves()
+                    move = random.choice(valid_moves)
+                    env.make_move(*move)
 
-                # Make the selected move
-                env.make_move(*env.get_valid_moves()[action])
-
-            # Increment the wins and draws count based on the game outcome
             if env.winner == 1:
                 wins += 1
             elif env.winner == 0:
                 draws += 1
 
-        # Return the final count of wins and draws
         return wins, draws

@@ -6,7 +6,6 @@ import logging
 def combine_q_values(agents):
 
     combined_q_values ={}
-    # Write comments for this code. Do not change anything about the code itself.
     # Initialize combined_q_values with the structure of q_values from the first agent
     # For example, if q_values = {a: [1, 2], b: [3, 4]},
     # then combined_q_values = {a: [0, 0], b: [0, 0]}
@@ -16,7 +15,7 @@ def combine_q_values(agents):
 
         # Initialize all values to zero
         for action, value in actions.items():
-            combined_q_values[state][action] = 0
+            combined_q_values[state][int(action)] = 0
 
 
     # Sum the Q values from all agents
@@ -26,7 +25,7 @@ def combine_q_values(agents):
     for agent in agents:
         for state, actions in agent.q_values.items():
             for action, value in actions.items():
-                combined_q_values[state][action] += value
+                combined_q_values[state][int(action)] += value
 
 
     # Divide by the number of agents to get the average
@@ -37,10 +36,39 @@ def combine_q_values(agents):
 
     for state, actions in combined_q_values.items():
         for action, value in actions.items():
-            combined_q_values[state][action] /= num_agents
+            combined_q_values[state][int(action)] /= num_agents
 
     return combined_q_values
 
+def combine_returns(agents):
+    combined_returns = {}
+    for agent in agents:
+        for (state, action), returns_list in agent.returns.items():
+            key = (tuple(int(x) for x in state), int(action))
+            if key not in combined_returns:
+                combined_returns[key] = []
+            combined_returns[key].extend(returns_list)
+    # Now compute Q-values as the mean of returns
+    combined_q_values = {}
+    for (state, action), returns_list in combined_returns.items():
+        if state not in combined_q_values:
+            combined_q_values[state] = {}
+        combined_q_values[state][action] = np.mean(returns_list) if returns_list else 0.0
+    return combined_q_values
+
+def combine_returns_max(agents):
+    combined_q_values = {}
+    for agent in agents:
+        for state, actions in agent.q_values.items():
+            if state not in combined_q_values:
+                combined_q_values[state] = {}
+            for action, value in actions.items():
+                action = int(action)
+                if action not in combined_q_values[state]:
+                    combined_q_values[state][action] = value
+                else:
+                    combined_q_values[state][action] = max(combined_q_values[state][action], value)
+    return combined_q_values
 
 
 
