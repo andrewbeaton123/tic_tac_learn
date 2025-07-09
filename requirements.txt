@@ -1,0 +1,7 @@
+numpy==2.2.6
+mlflow
+pandas==2.3.0
+recordclass==0.22.1
+git+https://github.com/andrewbeaton123/tic_tac_toe_game.git
+#torch==2.7.1
+tqdm==4.67.1
