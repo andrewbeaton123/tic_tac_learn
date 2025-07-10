@@ -12,3 +12,5 @@ def validate_player_numbers(player_number):
     """Ensures that the players is allowed"""
     #TODO work with claude example to write the player nuimber ingestion from yaml
 
+    if player_number not in []
+

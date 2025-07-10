@@ -1,0 +1,5 @@
+games:
+  tic_tac_toe:
+    allowed_players: [1,2]
+
+  chess: 

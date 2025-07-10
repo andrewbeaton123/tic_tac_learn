@@ -12,6 +12,7 @@ from tic_tac_learn.monte_carlo_learning.flow_control import multi_core_monte_car
 
 # confiig basics 
 mlflow.set_tracking_uri("http://homelab.mlflow")#("http://192.168.1.159:5000")
+#TODO Change over to loguru 
 logging.basicConfig(level="INFO")
 
 
