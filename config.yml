@@ -1,5 +1,44 @@
+
+# Application settings
+app:
+  current_game: "tic_tac_toe"  # Set the default/current game
+  environment: "development"    # development, testing, production
+  
+# Game definitions
 games:
   tic_tac_toe:
-    allowed_players: [1,2]
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Tic Tac Toe"
+  
+  chess:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Chess"
+  
+  poker:
+    allowed_players: [1, 2, 3, 4, 5, 6]
+    min_players: 2
+    max_players: 6
+    display_name: "Poker"
+  
+  battleship:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Battleship"
+  
+  connect_four:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Connect Four"
 
-  chess: 
+# Default settings (fallback)
+default:
+  allowed_players: [1, 2]
+  min_players: 2
+  max_players: 2
+  display_name: "Generic Game"

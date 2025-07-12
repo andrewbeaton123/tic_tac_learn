@@ -69,3 +69,54 @@ class ConfigManager:
                 'display_name': 'Generic Game'
             }
         }
+    
+    @property
+    def current_game(self) -> str : 
+        """ Gets the current game returning default values where game does not exist"""
+        return self._config.get("app",{}).get("current_game","default")
+
+    @current_game.setter
+    def current_game(self, game_name: str) :
+        """
+        Sets the current game in the configuration.
+        Args:
+            game_name (str): The name of the game to set as current.
+        Logs:
+            - Warning if the 'app' key is missing in the configuration.
+            - Error if the specified game is not configured.
+            - Info when the current game is successfully set.
+        """
+
+        if "app" not in self._config:
+            logging.warning("Potential config configuration issue app was set set before game name")
+        
+        if game_name not in self._config["app"]:
+            logging.error(f"{game_name} is not a configured game please select from: {list(self._config["app"]["games"].keys())}")
+
+
+        self._config["app"]["current_game"] = game_name
+        
+        logging.info(f"Current game set to f{game_name}")
+    
+    @property
+    def app_config(self) ->  Dict | None :
+        """
+        Retrieves the application-specific configuration.
+        Returns:
+            dict | None: The configuration dictionary for the "app" section if present,
+            otherwise an empty dictionary.
+        """
+        
+        
+        return self._config.get("app",{})
+    
+    def get_game_config(self, game_name :str = None) -> Dict:
+
+        if game_name is None : 
+            game_name = self.current_game
+        
+        game_config = self._config.get("app", {}).get("games", {}).get(game_name.lower())
+
+        if not game_config: 
+            logging.warning(f"No config for game: {game_name} in current  config -available games are {list(self._config["app"]["games"].keys())}")
+            return None
