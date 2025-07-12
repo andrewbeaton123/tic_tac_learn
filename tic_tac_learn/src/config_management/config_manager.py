@@ -6,6 +6,7 @@ import logging
 
 from typing import Dict
 from pathlib import Path
+from .utils import MissingConfigError
 
 class ConfigManager:
     """Manages the game configs"""
@@ -111,6 +112,17 @@ class ConfigManager:
         return self._config.get("app",{})
     
     def get_game_config(self, game_name :str = None) -> Dict:
+        """
+        Retrieves the configuration dictionary for a specified game.
+        Args:
+            game_name (str, optional): The name of the game to retrieve the configuration for.
+                If None, uses the currently selected game (`self.current_game`).
+        Returns:
+            Dict: The configuration dictionary for the specified game if found.
+            None: If the configuration for the specified game does not exist.
+        Logs:
+            A warning if the configuration for the specified game is not found.
+        """
 
         if game_name is None : 
             game_name = self.current_game
@@ -118,5 +130,7 @@ class ConfigManager:
         game_config = self._config.get("app", {}).get("games", {}).get(game_name.lower())
 
         if not game_config: 
-            logging.warning(f"No config for game: {game_name} in current  config -available games are {list(self._config["app"]["games"].keys())}")
-            return None
+            
+            raise MissingConfigError(f"No config for game: {game_name} in current  config -available games are {list(self._config["app"]["games"].keys())}")
+        
+        return game_config
