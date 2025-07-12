@@ -6,7 +6,7 @@ import logging
 
 from typing import Dict, List
 from pathlib import Path
-from .utils import MissingConfigError
+from .utils import MissingConfigError, c
 
 class ConfigManager:
     """Manages the game configs"""
@@ -46,6 +46,7 @@ class ConfigManager:
                 return config or self._get_default_config()
         
         except Exception as e:
+
             logging.error (f"Error during config load {e} - Using default config")
             return self._get_default_config()
     
@@ -168,4 +169,18 @@ class ConfigManager:
         return min_players, max_players
     
 
-    
+    def get_all_games(self) -> List: 
+        """Get the keys of the config games"""
+        return list(self._config.get("games",{}).keys())
+
+
+    def reload_config(self) -> None :
+        """Trigger standard load_config"""
+        self._config = self._load_config()
+        logging.info("Config Reloaded ")
+
+    @property
+    def config(self) -> Dict : 
+        """Return the current config dict"""
+        return self._config
+
