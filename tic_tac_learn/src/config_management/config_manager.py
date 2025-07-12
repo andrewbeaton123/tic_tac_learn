@@ -148,3 +148,24 @@ class ConfigManager:
         """
         game_config = self.get_game_config(game_name)
         return game_config.get("allowed_players", None)
+    
+
+    def get_player_range (self, 
+                          game_name : str  = None 
+                          ) -> tuple[int, int] :  
+        
+        game_config = self.get_game_config(game_name)
+
+        min_players = game_config.get("min_players", None)
+        max_players = game_config.get("max_players", None )
+        
+        if not min_players:
+            raise MissingConfigError(f"min_players not set in config")
+        
+        if not max_players: 
+            raise MissingConfigError(f"max_players not set in config")
+        
+        return min_players, max_players
+    
+
+    
