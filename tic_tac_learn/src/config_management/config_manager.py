@@ -94,7 +94,7 @@ class ConfigManager:
             logging.warning("Potential configuration issue: 'app' key missing before setting game name")
         
         if game_name not in self._config["app"]["games"]:
-            logging.error(f"{game_name} is not a configured game please select from: {list(self._config["app"]["games"].keys())}")
+            logging.error(f"{game_name} is not a configured game please select from: {list(self._config['app']['games'].keys())}")
 
 
         self._config["app"]["current_game"] = game_name

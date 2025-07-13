@@ -33,5 +33,9 @@ class GameInterface(ABC):
     def check_player_is_valid(self,  player_number : int) -> bool :
         pass
 
+    @abstractmethod
+    def reset(self):
+        pass
+
 
     

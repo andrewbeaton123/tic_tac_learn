@@ -27,12 +27,12 @@ def main():
       # to be consistent for the models to use. The game would then be imported into the training code here 
       # and then would be imported into the place where you can play against the model.
       conf = Config_2_MC()
-      conf.run_name = "Alpine docker test- 4e6 - draw negative reward - lower Lr"
+      conf.run_name = "Refactor testing"
 
-      conf.total_games = int(40e4)
+      conf.total_games = int(4e3)
       conf.experiment_name= "Tic Tac Dev"
-      conf.steps = 40
-      conf.cores= 2
+      conf.steps = 10
+      conf.cores= 4
       conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.001
       conf.learning_rate_scaling = 1

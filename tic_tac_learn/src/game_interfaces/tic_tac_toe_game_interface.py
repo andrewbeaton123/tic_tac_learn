@@ -77,3 +77,7 @@ class TicTacToeGameInterface(GameInterface):
     def get_winner(self) -> int:
         """Get the winner of the game (0 for draw, 1 or 2 for player)."""
         return self.game.winner
+
+    def reset(self):
+        """Resets the game to its initial state."""
+        self.game.reset()

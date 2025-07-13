@@ -108,9 +108,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
         for state in self.all_possible_states:
             self.q_values[state] = {}
-            env = TicTacToeGameInterface(1, self.config_manager, game_state=state)
-            valid_moves = env.get_valid_moves()
-            for action_index in valid_moves:
+            # Initialize all 9 possible actions for each state
+            for action_index in range(9):
                 self.q_values[state][action_index] = 0
                 self.returns[(state, action_index)] = []
 
@@ -273,8 +272,12 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         """
         for state, action, total_reward in reward_game_states:
             action = int(action)
-            self.returns[(state, action)].append(total_reward)
-            self.q_values[state][action] = np.mean(self.returns[(state, action)])  
+            # Retrieve the list, modify it, and reassign it
+            current_returns_list = self.returns[(state, action)]
+            current_returns_list.append(total_reward)
+            self.returns[(state, action)] = current_returns_list
+
+            self.q_values[state][action] = sum(self.returns[(state, action)]) / len(self.returns[(state, action)])  
 
     def associate_reward_with_game_state(self, state_action_reward: list[tuple]) -> list[tuple]:
         reward_game_states = []
