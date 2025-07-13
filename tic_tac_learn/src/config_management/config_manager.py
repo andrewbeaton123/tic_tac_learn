@@ -6,7 +6,7 @@ import logging
 
 from typing import Dict, List
 from pathlib import Path
-from .utils import MissingConfigError, c
+from .utils import MissingConfigError
 
 class ConfigManager:
     """Manages the game configs"""
@@ -14,7 +14,7 @@ class ConfigManager:
     _instance = None 
     _config = None 
 
-    def __new__ (cls):
+    def __new__ (cls, config_path : str = "config.yml"):
         """Singleton pattern to enforce only one current config """
 
         if cls._instance is None : 

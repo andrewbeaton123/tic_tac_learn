@@ -5,7 +5,7 @@ from datetime import datetime
 from src.config_management  import ConfigManager
 cm = ConfigManager()
 
-class GameError(Exception):
+class InterFaceError(Exception):
     """ Base exception for all game errors"""
    
     def __init__(self, message,code=None):
@@ -16,12 +16,12 @@ class GameError(Exception):
         self.log_error()
 
     def log_error(self):
-        logging.error(f"[{self.timestamp}] - Game Error ({self.code}) : {self.message}")
+        logging.error(f"[{self.timestamp}] - Interface Error ({self.code}) : {self.message}")
 
 
-class InvalidPlayerError(GameError):
+class InvalidPlayerError(InterFaceError):
     """Raised when player is set to something other than 1 or 2"""
-    logging
+    pass
 
 
 def validate_player_numbers(player_number):
@@ -32,4 +32,4 @@ def validate_player_numbers(player_number):
     if player_number not in cm.get_allowed_players():
         raise InvalidPlayerError(f"Invalid player {player_number} is not in {cm.get_allowed_players()}")
 
-
+    

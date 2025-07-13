@@ -8,7 +8,9 @@ from datetime import datetime
 class GameInterface(ABC):
     
     @abstractmethod
-    def __init__(self, current_player: int , game_state = None):
+    def __init__(self, current_player: int ,
+                config_manager,
+                game_state = None):
         pass
     
     
