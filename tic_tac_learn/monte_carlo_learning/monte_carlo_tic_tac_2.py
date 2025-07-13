@@ -1,4 +1,3 @@
-import numpy as np
 import logging
 import random
 import mlflow.pyfunc
@@ -6,36 +5,24 @@ import pandas as pd
 
 
 from typing import Dict, List
-from tic_tac_toe_game.game import TicTacToe
 from tic_tac_learn.src import errors
 from tic_tac_learn.multi_processing_tools.multi_process_controller import multi_process_controller
+from tic_tac_learn.src.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+from tic_tac_learn.src.control import Config_2_MC
+
 
 class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
-    def __init__(self, epsilon : float, all_possible_states: list):
+    def __init__(self, epsilon : float, all_possible_states: list, config_manager: Config_2_MC):
         self.epsilon : float = epsilon
         self.q_values : Dict = {}
         self.returns : Dict = {}
         self.all_possible_states : list = all_possible_states
+        self.config_manager = config_manager
 
         # This is to server as a training game count between different training
         #runs for the same agent
         self._agent_training_games_total : int = 0
-    
-    def convert_valid_move_to_board_index(self, 
-                                          move_tuple: tuple) -> list : 
-        """
-        Converts a tuple of valid move coordinates to their corresponding board indices.
-        Each move is represented as a (row, column) tuple, and the board is assumed to be a 3x3 grid.
-        The board index is calculated as (row * 3 + column) for each move.
-        Args:
-            move_tuple (tuple): A tuple containing (row, column) pairs representing valid moves.
-        Returns:
-            list: A list of integers representing the corresponding board indices for each move.
-        """
-        
-
-        return [int(move[0]*3 + move[1]) for move in move_tuple ]
     
 
     def _add_to_training_games_total(self, training_games: int ) -> None: 
@@ -121,11 +108,9 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
         for state in self.all_possible_states:
             self.q_values[state] = {}
-            board = np.reshape(list(state), (3, 3))
-            env = TicTacToe(1, board)
+            env = TicTacToeGameInterface(1, self.config_manager, game_state=state)
             valid_moves = env.get_valid_moves()
-            for move in valid_moves:
-                action_index = int(move[0]*3 + move[1])  # ensure Python int
+            for action_index in valid_moves:
                 self.q_values[state][action_index] = 0
                 self.returns[(state, action_index)] = []
 
@@ -146,11 +131,9 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         ensure  that the returns space is also available
         """
         for state in self.all_possible_states:
-            board = np.reshape(list(state), (3, 3))
-            env = TicTacToe(1, board)
+            env = TicTacToeGameInterface(1, self.config_manager, game_state=state)
             valid_moves = env.get_valid_moves()
-            for move in valid_moves:
-                action_index = move[0]*3 + move[1]
+            for action_index in valid_moves:
                 self.returns[(state, action_index)] = []
 
     def check_q_values(self) -> bool:
@@ -170,17 +153,17 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
     
 
    
-    def get_state(self, env):
+    def get_state(self, env: TicTacToeGameInterface):
         """
         Gets the current state of the environment.
 
         Args:
-            env (TicTacToe): The TicTacToe environment.
+            env (TicTacToeGameInterface): The TicTacToeGameInterface environment.
 
         Returns:
             tuple: A tuple representing the current state of the environment.
         """
-        return tuple(int(x) for x in env.board.reshape(-1))
+        return env.get_state()
     
 
     def train(self, episodes, starting_player: int = 1):
@@ -191,7 +174,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             episodes (int): The number of episodes to train for.
         """
         if starting_player >=1 and starting_player<=2:
-            self.learn(TicTacToe(starting_player),episodes) ## Old Random implementationrandom.choice([1,2])
+            self.learn(TicTacToeGameInterface(starting_player, self.config_manager),episodes)
         else:
             raise errors.OutOfBoundsPlayerChoice()
     
@@ -232,7 +215,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
 
         for state_array in game_states:
             state = tuple(state_array)
-            env = TicTacToe(1, np.reshape(state, (3, 3)))
+            env = TicTacToeGameInterface(1, self.config_manager, game_state=state)
 
             if not env.is_game_over():
                 action = self.get_action(env)
@@ -244,32 +227,27 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         return predictions
         
             
-    def take_turn(self, env: TicTacToe) -> tuple[TicTacToe,int] :  
+    def take_turn(self, env: TicTacToeGameInterface) -> tuple[TicTacToeGameInterface,int] :  
         
         # take turn is something that happens inside of learn
         action = self.get_action(env) 
-        valid_moves = env.get_valid_moves()
-        valid_boad_indices = [int(idx) for idx in self.convert_valid_move_to_board_index(valid_moves)]
-        action = int(action)
-        move_index = valid_boad_indices.index(action)
         logging.debug(f" valid moves are {env.get_valid_moves()}")
         logging.debug(f" move is {action}")
-        env.make_move(*valid_moves[move_index])
+        env.make_move(action)
         return env, action
     
-    def get_action(self, env):
+    def get_action(self, env: TicTacToeGameInterface):
         """
         Selects an action based on the current state and epsilon-greedy exploration.
 
         Args:
-            env (TicTacToe): The TicTacToe environment.
+            env (TicTacToeGameInterface): The TicTacToeGameInterface environment.
 
         Returns:
             int: The selected action.
         """
-        state = tuple(self.get_state(env))
-        valid_moves = env.get_valid_moves()
-        valid_indices = [int(move[0]*3 + move[1]) for move in valid_moves]  # ensure Python int
+        state = self.get_state(env)
+        valid_indices = env.get_valid_moves()
 
         if env.current_player == 1:
             if np.random.rand() < self.epsilon:
@@ -301,36 +279,36 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
     def associate_reward_with_game_state(self, state_action_reward: list[tuple]) -> list[tuple]:
         reward_game_states = []
         for idx, (state, action, _) in enumerate(state_action_reward):
-            G = sum(reward for _, _, reward in state_action_reward[idx:])
+            G = sum(reward for _, _, reward in state_action_action_reward[idx:])
             reward_game_states.append((state, action, G))
         return reward_game_states
             
-    def calculate_reward(self, env):
+    def calculate_reward(self, env: TicTacToeGameInterface):
         """
         Calculates the reward based on the current game state.
 
         Args:
-            env (TicTacToe): The TicTacToe environment.
+            env (TicTacToeGameInterface): The TicTacToeGameInterface environment.
 
         Returns:
             float: The reward.
         """
         if env.is_game_over():
-            if env.winner == 1:
+            if env.get_winner() == 1:
                 return 1  # Player 1 wins
-            elif env.winner == 2:
+            elif env.get_winner() == 2:
                 return -1  # Player 2 wins
             else:
                 return -0.1  # Draw
         return 0  # Continue playing, no immediate reward
     
 
-    def learn(self, env, num_episodes):
+    def learn(self, env: TicTacToeGameInterface, num_episodes):
         """
         Learns to play Tic Tac Toe through Monte Carlo tree search.
 
         Args:
-            env (TicTacToe): The TicTacToe environment.
+            env (TicTacToeGameInterface): The TicTacToeGameInterface environment.
             num_episodes (int): The number of episodes to learn for.
         """
         for _ in range(num_episodes):
@@ -338,13 +316,11 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
             state_action_reward = []
             
             while not env.is_game_over():
-                old_state = tuple(self.get_state(env))
+                old_state = self.get_state(env)
 
                 env, action  = self.take_turn(env)
                 reward =self.calculate_reward(env)
 
-                #This is old version of above
-                #-1 if env.is_game_over() and env.winner != 1 else 0
                 state_action_reward.append((old_state, action, reward))
 
             summed_rewards_with_states = self.associate_reward_with_game_state(state_action_reward)
@@ -390,23 +366,19 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         draws = 0
 
         for _ in range(num_games):
-            env = TicTacToe(random.choice([1, 2]))
+            env = TicTacToeGameInterface(random.choice([1, 2]), self.config_manager)
             while not env.is_game_over():
                 if env.current_player == 1:
                     action = self.get_action(env)
-                    valid_moves = env.get_valid_moves()
-                    valid_boad_indices = [int(idx) for idx in self.convert_valid_move_to_board_index(valid_moves)]
-                    action = int(action)
-                    move_index = valid_boad_indices.index(action)
-                    env.make_move(*valid_moves[move_index])
+                    env.make_move(action)
                 else:
                     valid_moves = env.get_valid_moves()
                     move = random.choice(valid_moves)
-                    env.make_move(*move)
+                    env.make_move(move)
 
-            if env.winner == 1:
+            if env.get_winner() == 1:
                 wins += 1
-            elif env.winner == 0:
+            elif env.get_winner() == 0:
                 draws += 1
 
         return wins, draws

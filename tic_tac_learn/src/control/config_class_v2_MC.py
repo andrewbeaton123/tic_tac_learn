@@ -1,5 +1,5 @@
 import logging
-from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
+from tic_tac_learn.src.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
 
 class Config_2_MC:
     _instance = None
@@ -30,6 +30,9 @@ class Config_2_MC:
 
         
         return cls._instance
+    
+    def get_allowed_players(self) -> tuple[int, int]:
+        return (1, 2)
     
     def pre_run_calculations(self): 
         #calculations  from user defined variables to code format

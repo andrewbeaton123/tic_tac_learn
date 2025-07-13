@@ -1,5 +1,6 @@
 from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 from typing import Dict
+from tic_tac_learn.src.control import Config_2_MC
 
 def mc_create_run_instance(args) -> tuple[int,Dict]:
     """Trains a Monte Carlo agent for Tic-Tac-Toe.
@@ -28,7 +29,8 @@ def setup_mc_class(args) -> MonteCarloAgent:
         MonteCarloAgent: A trained Monte Carlo Agent ready for use.
     """
     all_states,lr = args  # Unpack the learning rate and all possible states 
-    agent= MonteCarloAgent(lr,all_states) # Initialize a new Monte Carlo Agent with the given parameters.
+    conf = Config_2_MC()
+    agent= MonteCarloAgent(lr,all_states, conf) # Initialize a new Monte Carlo Agent with the given parameters.
     agent.check_q_value_space_exists() # Ensure space for q-values exists before training
     #agent.initialize_q_values() # Uncomment this line if you want to initialize q-values manually
     return agent  

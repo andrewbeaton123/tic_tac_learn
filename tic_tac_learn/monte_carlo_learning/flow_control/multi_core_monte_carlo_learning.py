@@ -69,7 +69,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         if episodes != 1:
             if conf.agent_reload == None:
                 #Normal processing for learning by loading in stats and q values
-                combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
+                combined_agent = MonteCarloAgent(rate, run_var.all_possible_states, conf)
                 combined_agent.load_q_values(combined_q_values)
                 combined_agent.generate_returns_space_only()
                 agents = [combined_agent for core in range(conf.cores)]
@@ -133,11 +133,11 @@ def multi_core_monte_carlo_learning(all_possible_states):
         combined_q_values = combine_returns_max(agents)#combine_q_values(agents)
 
         # Load the combined Q values into a new agent
-        combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
+        combined_agent = MonteCarloAgent(rate, run_var.all_possible_states, conf)
         combined_agent.load_q_values(combined_q_values)
         
         # setting epsilon to 0 so that there ar eno random moves in the test 
-        test_agent = MonteCarloAgent(0.0, run_var.all_possible_states)
+        test_agent = MonteCarloAgent(0.0, run_var.all_possible_states, conf)
         test_agent.load_q_values(combined_q_values)
         #_-__-__-__-__-__-__-__-__-__-__-_            
         logging.debug("main- finshed q vlaue combination")
