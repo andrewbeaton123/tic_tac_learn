@@ -14,7 +14,7 @@ class ConfigManager:
     _instance = None 
     _config = None 
 
-    def __new__ (cls, config_path : str = "config.yml"):
+    def __new__ (cls):
         """Singleton pattern to enforce only one current config """
 
         if cls._instance is None : 
