@@ -2,3 +2,4 @@
 
 class MontecarloQlearningAgent():
     #TODO re write this monte carlo learning agent process uising the name game interface
+    pass

@@ -27,8 +27,7 @@ class InvalidPlayerError(InterFaceError):
 def validate_player_numbers(player_number):
 
     """Ensures that the players is allowed"""
-    #TODO work with claude example to write the player nuimber ingestion from yaml
-
+    cm = ConfigManager()
     if player_number not in cm.get_allowed_players():
         raise InvalidPlayerError(f"Invalid player {player_number} is not in {cm.get_allowed_players()}")
 
