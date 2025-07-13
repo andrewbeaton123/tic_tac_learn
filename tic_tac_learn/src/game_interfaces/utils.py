@@ -2,7 +2,7 @@
 import logging 
 
 from datetime import datetime
-from src.config_management  import ConfigManager
+from ..config_management  import ConfigManager
 cm = ConfigManager()
 
 class InterFaceError(Exception):

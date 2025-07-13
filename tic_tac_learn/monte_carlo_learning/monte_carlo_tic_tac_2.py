@@ -147,7 +147,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         
         for key, value in self.q_values.items():
 
-            if not np.all([np.logical_or(x ==0 , x is None )  for x in value]):
+            if not all([(x == 0 or x is None) for x in value.values()]):
                 return False
             return True
     
@@ -250,8 +250,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         valid_indices = env.get_valid_moves()
 
         if env.current_player == 1:
-            if np.random.rand() < self.epsilon:
-                action = np.random.choice(valid_indices)
+            if random.random() < self.epsilon:
+                action = random.choice(valid_indices)
             else:
                 # Only consider Q-values for valid actions
                 q_vals = {a: self.q_values[state][a] for a in valid_indices}
@@ -279,7 +279,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
     def associate_reward_with_game_state(self, state_action_reward: list[tuple]) -> list[tuple]:
         reward_game_states = []
         for idx, (state, action, _) in enumerate(state_action_reward):
-            G = sum(reward for _, _, reward in state_action_action_reward[idx:])
+            G = sum(reward for _, _, reward in state_action_reward[idx:])
             reward_game_states.append((state, action, G))
         return reward_game_states
             

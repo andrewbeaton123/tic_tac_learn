@@ -83,9 +83,6 @@ class Config_2_MC:
         This sets the agent reload varialbe if it is 
         of the type montecarlo agent 
         """
-        if not isinstance(agent_object, MonteCarloAgent) or isinstance(agent_object, type(None)):
-            raise ValueError("The agent path must be a Monte Carlo Agent")
-        
         self._agent_reload = agent_object
     
     @property

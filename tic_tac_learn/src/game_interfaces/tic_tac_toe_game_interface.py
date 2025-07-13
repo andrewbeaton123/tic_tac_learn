@@ -5,7 +5,6 @@ from .game_interface_abc import GameInterface
 from .utils  import InvalidPlayerError
 from typing import Any
 from tic_tac_toe_game.game import TicTacToe
-import numpy as np
 
 
 class TicTacToeGameInterface(GameInterface):
@@ -20,7 +19,9 @@ class TicTacToeGameInterface(GameInterface):
         if game_state is None:
             self.game = TicTacToe(current_player)
         else:
-            self.game = TicTacToe(current_player, board=np.array(game_state).reshape(3,3))
+            # Convert tuple game_state to a list of lists for TicTacToe
+            board_list = [list(game_state[i:i+3]) for i in range(0, 9, 3)]
+            self.game = TicTacToe(current_player, board=board_list)
         
         if not self.check_player_is_valid(self.current_player):
             raise InvalidPlayerError(f"Invalid player {self.current_player} is not in {self.config_manager.get_allowed_players()}")
@@ -51,7 +52,7 @@ class TicTacToeGameInterface(GameInterface):
     def get_state(self) -> Any:
         """Get the current board state as a tuple of integers."""
         try:
-            state = tuple(int(x) for x in self.game.board.reshape(-1))
+            state = tuple(int(cell) for row in self.game.board for cell in row)
             logging.debug(f"Retrieved game state for player {self.current_player}: {state}")
             return state
         except Exception as e:

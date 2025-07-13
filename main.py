@@ -29,8 +29,8 @@ def main():
       conf = Config_2_MC()
       conf.run_name = "Alpine docker test- 4e6 - draw negative reward - lower Lr"
 
-      conf.total_games = int(40e6)
-      conf.experiment_name= "Tic Tac Learn"
+      conf.total_games = int(40e4)
+      conf.experiment_name= "Tic Tac Dev"
       conf.steps = 40
       conf.cores= 2
       conf.learning_rate_start= 0.8
