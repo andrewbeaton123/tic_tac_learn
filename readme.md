@@ -1,37 +1,71 @@
-# Tic Tac Toe Game with Reinforcement Learning
-
+# Tic Tac Learn: A Reinforcement Learning Framework
 
 ![Alt Text](https://i.makeagif.com/media/4-24-2016/N2q-9R.gif)
 
-This repository contains a Tic Tac Toe game that uses reinforcement learning techniques to train the game player. The ML approach uses Q-values, epsilon greedy selections, and multi-threading to learn and improve its gameplay.
+This repository contains a framework for training agents to play games like Tic Tac Toe using reinforcement learning. It features a modular architecture, parallel training capabilities, and configurable run settings.
 
-## Reinforcement Learning
+## Key Features
 
-The code learns by playing the game multiple times and updating the Q-values based on the outcomes of the games. An epsilon greedy selection strategy is used to balance exploration and exploitation during the learning process.
+- **Game Interface Abstraction**: A core design principle is the `GameInterface`, an abstract base class that decouples the learning agents from the specific game logic. This allows the same agent to learn different games, provided a compatible interface is created.
+- **Monte Carlo Q-learning Agent**: A new, fully implemented `MontecarloQlearningAgent` that learns to play games by interacting with the `GameInterface`. It uses an epsilon-greedy policy for action selection and learns from episode rollouts.
+- **Parallel Training**: The framework uses a high-performance, parallel training strategy. Multiple instances of the agent are run on different CPU cores, and their learned Q-tables are merged after training is complete. This "Combine Post-Training" approach maximizes throughput by eliminating inter-process communication during the training loops.
+- **Configuration via YAML**: All key parameters for the Monte Carlo simulation are managed in the `config.yml` file, allowing for easy experimentation without code changes.
 
-A key architectural improvement is the introduction of a **Game Interface Abstraction**, which decouples the core game logic from the reinforcement learning agent. This allows for easier integration of different game types in the future.
+## How It Works
 
-The learning process now leverages **flexible multiprocessing** by utilizing shared Q-value and return dictionaries across multiple processes. This enables concurrent game simulations and direct updates to the shared learning state, significantly speeding up training and improving the efficiency of the multi-threaded learning.
+### 1. Configuration
 
-## Configuration
+The primary settings for a training run are defined in `config.yml` under the `monte_carlo_settings` section. This includes parameters like the number of games, learning rate, and MLflow tracking details.
 
-The training parameters are managed through the `Config_2_MC` class. Key configurable parameters include:
-- `total_games`: Total number of games to simulate for training.
-- `steps`: Number of training steps.
-- `cores`: Number of CPU cores to utilize for parallel game simulations.
-- `learning_rate_start`: Initial learning rate.
-- `learning_rate_min`: Minimum learning rate.
-- `learning_rate_scaling`: Factor for learning rate decay.
-- `test_games_per_step`: Number of games to simulate for testing agent performance at each step.
-- `learning_rate_flat_games`: Number of games for which the learning rate remains flat.
-- `experiment_name`: MLflow experiment name.
-- `run_name`: MLflow run name.
-- `custom_model_name`: Name for the saved MLflow model artifact.
+```yaml
+# Example from config.yml
+monte_carlo_settings:
+  run_name: "My First Run"
+  total_games: 100000
+  experiment_name: "Tic Tac Dev"
+  steps: 10
+  cores: 4
+  learning_rate_start: 0.6
+  # ... and other parameters
+```
+
+### 2. Initialization
+
+When `main.py` is executed, it loads the settings from `config.yml` into a configuration object.
+
+### 3. Parallel Training
+
+The application uses Python's `multiprocessing` module to achieve parallel training. Here is the workflow:
+
+1.  A pool of worker processes is created (one for each CPU core specified in the config).
+2.  Each worker process creates its own instance of the `MontecarloQlearningAgent` and a game interface.
+3.  Each agent trains independently for a set number of episodes, running game simulations at full speed without any communication overhead.
+4.  Upon completion, each agent returns its learned Q-table (a dictionary of state-action values).
+
+### 4. Merging Q-tables
+
+After all worker processes have finished, the main process collects the list of individual Q-tables. A `merge_q_tables` function then combines them into a single, master Q-table by averaging the Q-values for each state-action pair that was learned by multiple agents.
+
+### 5. Logging
+
+The entire run, including parameters and the final merged Q-table (as an artifact), is logged to MLflow for tracking and analysis.
+
+## How to Run
+
+1.  **Install Dependencies**: 
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Configure the Run**: Edit the `monte_carlo_settings` in `config.yml` to define your training parameters.
+3.  **Run the Training**: 
+    ```bash
+    python main.py
+    ```
 
 ## Current Status
 
 This code is a work in progress. Recent significant improvements include:
-- Implementation of a game interface abstraction for better modularity.
-- Refactoring of the multiprocessing system for enhanced flexibility and concurrent training.
-- Removal of direct `numpy` dependencies from core agent and game interface logic.
-- Resolution of various import errors and runtime exceptions, leading to a more stable training environment.
+- Implementation of the `MontecarloQlearningAgent`.
+- A robust and performant parallel training strategy ("Combine Post-Training").
+- Centralized configuration management using `config.yml`.
+- Refactoring of the core configuration class to be more flexible.

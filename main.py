@@ -1,60 +1,80 @@
 #Module imports
 import logging 
+import sys
+
+logging.basicConfig(level="DEBUG")
+# Configure logging to ensure DEBUG messages are shown
+log_formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# Clear existing handlers to prevent duplicate output
+if root_logger.hasHandlers():
+    root_logger.handlers.clear()
+
+# Add a StreamHandler to output to stdout
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(log_formatter)
+root_logger.addHandler(console_handler)
+
 import mlflow
-
-
+import yaml
 
 #local imports
-
 from tic_tac_learn.src.control import Config_2_MC
-from tic_tac_learn.src.control.setup import pre_run_calculations_tasks
-from tic_tac_learn.monte_carlo_learning.flow_control import multi_core_monte_carlo_learning
+from tic_tac_learn.monte_carlo_learning.flow_control.run_monte_carlo import run_parallel_training
 
 # confiig basics 
-mlflow.set_tracking_uri("http://homelab.mlflow")#("http://192.168.1.159:5000")
-#TODO Change over to loguru 
-logging.basicConfig(level="INFO")
+mlflow.set_tracking_uri("http://homelab.mlflow")
 
+
+def load_config(config_path: str) -> dict:
+    """Loads a YAML config file."""
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
 
 def main():
+    """Main execution function."""
+    print("--- Starting main() function ---")
 
-      #~~~~~~~~~~~~~~~~~~~
-      #Overall run settings for Monte Carlo  
-      #~~~~~~~~~~~~~~~~~~~
-      #TODO: Test that the models in ml flow predicts work fine with the game.
-      #Make new repo that is the game using a trained model to pick the best move
-      # Need to think if I should split the game out as its going  to be something I would  need
-      # to be consistent for the models to use. The game would then be imported into the training code here 
-      # and then would be imported into the place where you can play against the model.
-      conf = Config_2_MC()
-      conf.run_name = "Refactor testing"
+    # 1. Load Configuration from file
+    logging.info("Loading configuration from config.yml...")
+    print("DEBUG: Before loading config.yml")
+    config_data = load_config('config.yml')
+    print("DEBUG: After loading config.yml")
+    mc_settings = config_data.get('monte_carlo_settings', {})
+    print("DEBUG: After getting monte_carlo_settings")
 
-      conf.total_games = int(4e3)
-      conf.experiment_name= "Tic Tac Dev"
-      conf.steps = 10
-      conf.cores=1
-      conf.learning_rate_start= 0.6
-      conf.learning_rate_min = 0.001
-      conf.learning_rate_scaling = 1
-      conf.test_games_per_step = 3000
-      conf.learning_rate_flat_games = conf.total_games* 0.2
+    # 2. Populate the singleton Config object
+    print("DEBUG: Before creating Config_2_MC instance")
+    conf = Config_2_MC()
+    print("DEBUG: After creating Config_2_MC instance")
+    conf.load_from_dict(mc_settings)
+    print("DEBUG: After loading from dict")
+    conf.pre_run_calculations() # Ensure calculated properties are set
+    print("DEBUG: After pre_run_calculations")
+    logging.info(f"Configuration loaded for run: {conf.run_name}")
 
-      conf.custom_model_name = "Final Model as artifact"
-      
-      
-      
-      #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
-      #End of User editable variables 
-      #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
-      
-      
-      #TODO extract this code out and try and  make a base repeatable 
-      
-      mlflow.set_experiment(experiment_name = f"{conf.experiment_name}")
-      
-      with mlflow.start_run(run_name=f"{conf.run_name}"):
-            multi_core_monte_carlo_learning(pre_run_calculations_tasks())
+    # 3. Set up MLflow Experiment
+    print("DEBUG: Before setting MLflow experiment")
+    mlflow.set_experiment(experiment_name=conf.experiment_name)
+    print("DEBUG: After setting MLflow experiment")
 
-              
+    # 4. Start the MLflow run and execute training
+    print("DEBUG: Before starting MLflow run")
+    with mlflow.start_run(run_name=conf.run_name) as run:
+        print("DEBUG: Inside MLflow run context")
+        logging.info(f"MLflow run started (ID: {run.info.run_id})")
+        mlflow.log_params(mc_settings) # Log all the settings
+        
+        # This is the main call to our new orchestration function
+        print("DEBUG: Before calling run_parallel_training")
+        run_parallel_training(conf)
+        print("DEBUG: After calling run_parallel_training")
+        
+        logging.info("Training run finished successfully.")
+
+    print("--- Exiting main() function ---")
+
 if __name__ == "__main__":
-   res = main()
+   main()

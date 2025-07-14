@@ -13,12 +13,14 @@ class Config_2_MC:
             cls._instance.total_games = 200
             cls._instance.steps = 10
             cls._instance.cores = 1
-            cls._instance.learning_rate_start = 1
-            cls._instance.learning_rate_min = 0.01
-            cls._instance.learning_rate_scaliing = 1
-            cls._instance.learning_rate_flat_games = 0.1* cls._instance.total_games
+            cls._instance._learning_rate_start = 1
+            cls._instance._learning_rate_min = 0.01
+            cls._instance._learning_rate_scaling = 1
+            cls._instance._learning_rate_flat_games = 0.1* cls._instance.total_games
 
-            cls._instance.test_games_per_step = 1000
+            cls._instance._test_games_per_step = 1000
+            cls._instance._discount_factor = 0.9
+            cls._instance._exploration_rate = 0.1
 
 
             cls._instance._frozen_learning_rate_steps = None
@@ -33,25 +35,51 @@ class Config_2_MC:
     
     def get_allowed_players(self) -> tuple[int, int]:
         return (1, 2)
+
+    def load_from_dict(self, config_dict: dict):
+        """Loads configuration from a dictionary."""
+        for key, value in config_dict.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
     
     def pre_run_calculations(self): 
-        #calculations  from user defined variables to code format
+        # Calculations from user defined variables to code format
         # These must be run before the config class is used
-        self._frozen_learning_rate_steps = (self._instance.learning_rate_flat_games /
-                                            (self._instance.total_games  /self._instance.steps) )
-        
-        
+        logging.info("Starting Monte Carlo Pre run calculations.")
 
-        self.games_per_step = self._instance.total_games /self._instance.steps
+        # Ensure steps is not zero to prevent division by zero
+        if self.steps == 0:
+            logging.error("Config Error: 'steps' cannot be zero. Setting to 1.")
+            self.steps = 1
+
+        # Calculate games per step
+        self.games_per_step = self.total_games / self.steps
+
+        # Calculate frozen learning rate steps
+        # Ensure games_per_step is not zero to prevent division by zero
+        if self.games_per_step == 0:
+            logging.error("Config Error: 'games_per_step' is zero. Setting frozen_learning_rate_steps to 1.")
+            self._frozen_learning_rate_steps = 1
+        else:
+            self._frozen_learning_rate_steps = (self.learning_rate_flat_games / self.games_per_step)
         
-        self.learning_rate_decay_rate = round( self._instance.learning_rate_scaliing*
-                                                        (self._instance.learning_rate_start -
-                                                        self._instance.learning_rate_min
-                                                        )/(self._instance.steps - 
-                                                            self.frozen_learning_rate_steps),4)
+        # Ensure frozen_learning_rate_steps is at least 1 if it's a positive value
+        if self._frozen_learning_rate_steps < 1 and self.learning_rate_flat_games > 0:
+            self._frozen_learning_rate_steps = 1
+        elif self.learning_rate_flat_games == 0:
+            self._frozen_learning_rate_steps = 0 # No flat phase
+
+        # Calculate learning rate decay rate
+        decay_steps = self.steps - self.frozen_learning_rate_steps
+        if decay_steps <= 0: # Prevent division by zero or negative steps for decay
+            logging.warning("Config Warning: Decay steps are zero or negative. Learning rate will not decay.")
+            self.learning_rate_decay_rate = 0.0
+        else:
+            self.learning_rate_decay_rate = round(self.learning_rate_scaling *
+                                                        (self.learning_rate_start -
+                                                        self.learning_rate_min
+                                                        ) / decay_steps, 4)
         
-        if self._frozen_learning_rate_steps < 1: 
-            self._frozen_learning_rate_steps =1
         logging.info("Monte Carlo Pre run calculations finished.")
         logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
         logging.debug(f"games_per_step = {self.games_per_step}")
@@ -165,7 +193,7 @@ class Config_2_MC:
     @property
     def learning_rate_start(self) -> float:
         """float: Gets the learning rate."""
-        return self._learning_rate
+        return self._learning_rate_start
 
     @learning_rate_start.setter
     def learning_rate_start(self, value: float) -> None:
@@ -174,7 +202,7 @@ class Config_2_MC:
         Args:
             value (float): The new learning rate value.
         """
-        self._learning_rate = value
+        self._learning_rate_start = value
 
     @property
     def learning_rate_min(self) -> float:
@@ -231,3 +259,31 @@ class Config_2_MC:
             value (int): The new number of test games per step.
         """
         self._test_games_per_step = value
+
+    @property
+    def discount_factor(self) -> float:
+        """float: Gets the discount factor (gamma) for Q-learning."""
+        return self._discount_factor
+
+    @discount_factor.setter
+    def discount_factor(self, value: float) -> None:
+        """Sets the discount factor (gamma) for Q-learning.
+        
+        Args:
+            value (float): The new discount factor.
+        """
+        self._discount_factor = value
+
+    @property
+    def exploration_rate(self) -> float:
+        """float: Gets the exploration rate (epsilon) for epsilon-greedy policy."""
+        return self._exploration_rate
+
+    @exploration_rate.setter
+    def exploration_rate(self, value: float) -> None:
+        """Sets the exploration rate (epsilon) for epsilon-greedy policy.
+        
+        Args:
+            value (float): The new exploration rate.
+        """
+        self._exploration_rate = value

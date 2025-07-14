@@ -37,5 +37,15 @@ class GameInterface(ABC):
     def reset(self):
         pass
 
+    @abstractmethod
+    def get_possible_actions(self) -> list[int]:
+        """Get a list of possible actions for the current state."""
+        pass
+
+    @abstractmethod
+    def get_reward(self, player_id: int) -> float:
+        """Get the reward for a given player."""
+        pass
+
 
     

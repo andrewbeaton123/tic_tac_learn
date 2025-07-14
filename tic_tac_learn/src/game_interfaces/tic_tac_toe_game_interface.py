@@ -40,7 +40,7 @@ class TicTacToeGameInterface(GameInterface):
         
         try:
             self.game.make_move(row, col)
-            logging.info(f"Player {self.current_player} successfully moved to position {position}")
+            logging.debug(f"Player {self.current_player} successfully moved to position {position}")
             return True
         except ValueError as e: # Catch specific ValueError for invalid moves
             logging.warning(f"Player {self.current_player} failed to move to position {position} (invalid move): {e}")
@@ -76,8 +76,50 @@ class TicTacToeGameInterface(GameInterface):
 
     def get_winner(self) -> int:
         """Get the winner of the game (0 for draw, 1 or 2 for player)."""
-        return self.game.winner
+        # First, check if the underlying game reports a winner
+        game_winner = self.game.winner
+        if game_winner in [1, 2]: # If a player has won
+            logging.debug(f"GameInterface.get_winner: Player {game_winner} has won.")
+            return game_winner
+
+        # If no player has won, check if the game is over and the board is full
+        # This implies a draw
+        is_over = self.is_game_over()
+        no_valid_moves = not self.get_valid_moves()
+        logging.debug(f"GameInterface.get_winner: is_game_over={is_over}, no_valid_moves={no_valid_moves}")
+
+        if is_over and no_valid_moves:
+            logging.debug("GameInterface.get_winner: Identified as a DRAW.")
+            return 0 # It's a draw
+
+        # If the game is not over, or if it's over but not a win/draw (shouldn't happen if logic is sound)
+        # This case should ideally not be reached if get_winner is only called when game is over.
+        # However, if it is called when game is not over, it should return 0 (no winner yet).
+        logging.debug("GameInterface.get_winner: No winner yet, or game not over.")
+        return 0 # No winner yet, or game not over
 
     def reset(self):
         """Resets the game to its initial state."""
         self.game.reset()
+
+    def get_possible_actions(self) -> list[int]:
+        """Get a list of possible actions for the current state."""
+        return self.get_valid_moves()
+
+    def get_reward(self, player_id: int) -> float:
+        """
+        Get the reward for a given player.
+
+        Args:
+            player_id (int): The ID of the player.
+
+        Returns:
+            float: The reward for the player.
+        """
+        winner = self.get_winner()
+        if winner == player_id:
+            return 1.0  # Win
+        elif winner == 0:
+            return 0.5  # Draw
+        else:
+            return -1.0  # Loss

@@ -36,6 +36,22 @@ games:
     max_players: 2
     display_name: "Connect Four"
 
+# Settings for the Monte Carlo run
+monte_carlo_settings:
+  run_name: "Refactor testing from_config"
+  total_games: 400
+  experiment_name: "Tic Tac Dev"
+  steps: 2
+  cores: 1
+  learning_rate_start: 0.6
+  learning_rate_min: 0.001
+  learning_rate_scaling: 1.0
+  test_games_per_step: 3000
+  # learning_rate_flat_games will be calculated as 20% of total_games
+  custom_model_name: "Final Model as artifact"
+  discount_factor: 0.9 # Discount factor (gamma) for future rewards
+  exploration_rate: 0.1 # Exploration rate (epsilon) for epsilon-greedy policy
+
 # Default settings (fallback)
 default:
   allowed_players: [1, 2]
