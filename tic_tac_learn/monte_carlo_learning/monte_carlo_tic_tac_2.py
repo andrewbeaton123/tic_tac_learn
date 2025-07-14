@@ -130,9 +130,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         ensure  that the returns space is also available
         """
         for state in self.all_possible_states:
-            env = TicTacToeGameInterface(1, self.config_manager, game_state=state)
-            valid_moves = env.get_valid_moves()
-            for action_index in valid_moves:
+            # Initialize all 9 possible actions for each state
+            for action_index in range(9):
                 self.returns[(state, action_index)] = []
 
     def check_q_values(self) -> bool:
@@ -209,11 +208,10 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
         if not isinstance(model_input, pd.DataFrame):
             raise TypeError("model_input must be a pandas DataFrame")
         
-        game_states = model_input.to_numpy()
+        game_states = [tuple(row) for row in model_input.values.tolist()]
         predictions = []
 
-        for state_array in game_states:
-            state = tuple(state_array)
+        for state in game_states:
             env = TicTacToeGameInterface(1, self.config_manager, game_state=state)
 
             if not env.is_game_over():
@@ -258,7 +256,7 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
                 
             return action  # index in valid_moves
         else:
-            return np.random.choice(valid_indices)
+            return random.choice(valid_indices)
 
     def update(self,reward_game_states: list[tuple]):
         """
@@ -375,9 +373,8 @@ class MonteCarloAgent(mlflow.pyfunc.PythonModel):
                     action = self.get_action(env)
                     env.make_move(action)
                 else:
-                    valid_moves = env.get_valid_moves()
-                    move = random.choice(valid_moves)
-                    env.make_move(move)
+                    action = self.get_action(env)
+                    env.make_move(action)
 
             if env.get_winner() == 1:
                 wins += 1

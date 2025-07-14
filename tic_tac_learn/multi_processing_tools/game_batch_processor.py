@@ -19,8 +19,7 @@ def process_game_batch(args):
     agent.q_values = shared_q_values
     agent.returns = shared_returns
 
-    
-
+     
     agent.learn(TicTacToeGameInterface(1, config_manager), num_games_to_simulate) # Run one episode
 
     logging.debug(f"Process finished simulating {num_games_to_simulate} games.")

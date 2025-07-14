@@ -32,8 +32,8 @@ def main():
       conf.total_games = int(4e3)
       conf.experiment_name= "Tic Tac Dev"
       conf.steps = 10
-      conf.cores= 4
-      conf.learning_rate_start= 0.8
+      conf.cores=1
+      conf.learning_rate_start= 0.6
       conf.learning_rate_min = 0.001
       conf.learning_rate_scaling = 1
       conf.test_games_per_step = 3000
