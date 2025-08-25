@@ -29,12 +29,12 @@ def main():
 
       
       conf = Config_2_MC()
-      conf.total_games = int(1e4)
-      level = "DEBUG"
+      conf.total_games = int(1e9)
+      level = "TRAINING"
       conf.experiment_name= "Tic Tac Learn 0.1.1"
       conf.steps = 4
-      
-      conf.cores= 8
+
+      conf.cores= 3
       conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.001
       conf.learning_rate_scaling = 1

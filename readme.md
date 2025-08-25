@@ -16,6 +16,26 @@ The aim is to create a training session that trains a 1 billion  game model  usi
 
 The session will include a warmup session configuration and  a 1 billion parameter game with expected good training results. 
 
+#### Training session 
+
+```Python
+conf = Config_2_MC()
+conf.total_games = int(1e9)
+level = "TRAINING"
+conf.experiment_name= "Tic Tac Learn 0.1.1"
+conf.steps = 4
+
+conf.cores= 8
+conf.learning_rate_start= 0.8
+conf.learning_rate_min = 0.001
+conf.learning_rate_scaling = 1
+conf.test_games_per_step = 30000
+conf.learning_rate_flat_games = conf.total_games* 0.2
+
+
+conf.run_name = f"One Billion Games 4 Steps - {level} - {str(conf.total_games)}"
+conf.custom_model_name = f"{conf.run_name}_2mc"
+```
 #### Warmup session 
 
 ``` Python
