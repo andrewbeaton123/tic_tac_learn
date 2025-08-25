@@ -25,20 +25,25 @@ def main():
       # Need to think if I should split the game out as its going  to be something I would  need
       # to be consistent for the models to use. The game would then be imported into the training code here 
       # and then would be imported into the place where you can play against the model.
-      conf = Config_2_MC()
-      conf.run_name = "Alpine docker test- 4e6 - draw negative reward - lower Lr"
 
-      conf.total_games = int(40e6)
-      conf.experiment_name= "Tic Tac Learn"
-      conf.steps = 40
-      conf.cores= 2
+
+      
+      conf = Config_2_MC()
+      conf.total_games = int(1e4)
+      level = "DEBUG"
+      conf.experiment_name= "Tic Tac Learn 0.1.1"
+      conf.steps = 4
+      
+      conf.cores= 8
       conf.learning_rate_start= 0.8
       conf.learning_rate_min = 0.001
       conf.learning_rate_scaling = 1
-      conf.test_games_per_step = 3000
+      conf.test_games_per_step = 30000
       conf.learning_rate_flat_games = conf.total_games* 0.2
 
-      conf.custom_model_name = "Final Model as artifact"
+
+      conf.run_name = f"One Billion Games 4 Steps - {level} - {str(conf.total_games)}"
+      conf.custom_model_name = f"{conf.run_name}_2mc"
       
       
       

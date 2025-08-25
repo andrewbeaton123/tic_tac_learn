@@ -10,7 +10,9 @@ from tic_tac_learn.src.control.config_class_v2_MC import Config_2_MC
 
 
 
-def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int, final_epoch: bool ) -> None:
+def log_in_progress_mc_model(agent: MonteCarloAgent, 
+                             episodes: int, 
+                             final_epoch: bool ) -> None:
     """Logs and saves a Monte Carlo agent model during training.
 
     This function saves a snapshot of the Monte Carlo agent model to MLflow
@@ -58,23 +60,38 @@ def log_in_progress_mc_model(agent: MonteCarloAgent, episodes: int, final_epoch:
         #write the q_values to a file
         with open(temp_q_values_path, 'wb') as f:
             pickle.dump(agent.q_values, f)
-
-        try:
+        
+        mlflow.log_artifact(temp_q_values_path, artifact_path="Q Values")
+        # try:
+        #     model_path: str = str(f"{temp_artifact_path}_model")
+            
             # Save the model with the q_values as an artifact
-            #TODO: add tagging options, model schema in  prep for inference need
-            mlflow.pyfunc.save_model(
-                path=f"{temp_artifact_path}_model",
-                python_model=agent,
-                artifacts={"q_values": temp_q_values_path}
-            )
+            # mlflow.pyfunc.save_model(
+            #     path=model_path,
+            #     python_model=agent,
+            #     artifacts={"q_values": temp_q_values_path}
+            # )
 
+            # Use a consistent, simple artifact name
+            # if final_epoch:
+            #     artifact_name = "final_model"
+            # else:
+            #     # You might want to skip registration for non-final epochs
+            #     artifact_name = "model"
+            
+            
             # Log the model artifact
-            mlflow.log_artifact(temp_artifact_path)
-            if final_epoch:
-                # Register the model
-                model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-                mlflow.register_model(model_uri=model_uri, name=custom_model_name)
+            
 
-        except MlflowException as e:
-            logging.error(f"Error saving model: {e}")
-            raise # Re-raise to alert the calling function
+            
+            # if final_epoch:s
+                
+            #     run_id = mlflow.active_run().info.run_id
+            #     model_uri = f"runs:/{run_id}/{artifact_name}"
+            #     logging.warning(f"{model_uri}")
+            #     mlflow.register_model(model_uri=model_uri, name=custom_model_name)
+                
+
+        # except MlflowException as e:
+            # logging.error(f"Error saving model: {e}")
+            # raise # Re-raise to alert the calling function
