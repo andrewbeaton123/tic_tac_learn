@@ -11,7 +11,7 @@ from tic_tac_learn.monte_carlo_learning.combine_q_value_dict import combine_q_va
 from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 #tooling imports
-from tic_tac_learn.src.control import Config_2_MC
+from tic_tac_learn.src.config_management import ConfigManager
 from tic_tac_learn.multi_processing_tools.multi_process_controller import multi_process_controller
 from tic_tac_learn.src.results_saving.save_controller import save_results_core,save_path_generator
 from tic_tac_learn.src.control.mlflow.create_experiment import create_mlflow_experiment
@@ -27,11 +27,11 @@ from ..learning_rate_scaling import learning_rate_scaling
 from tic_tac_learn.monte_carlo_learning.tracking_tools import log_in_progress_mc_model
 import tic_tac_learn.src.errors as errors
 
-def mc_computed_check(conf: Config_2_MC):
+def mc_computed_check(conf):
     """
     This function is used to check for pre-run calculations, in order to run the code. 
     """   
-    if conf.frozen_learning_rate_steps == None:
+    if conf.training.frozen_learning_rate_steps == None:
         raise errors.PreRunCalculationsNotComplete("Pre run calculations have not been  perfomred !")
 
 def multi_core_monte_carlo_learning(all_possible_states):
@@ -41,7 +41,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
     specific config file.  The results of this learning process will be saved in the folder:
         "../results/mc/current/frozen"
     """   
-    conf = Config_2_MC()
+    conf = ConfigManager().config
     log_named_tuple_as_params(conf)
     mc_computed_check(conf)
 
@@ -59,34 +59,36 @@ def multi_core_monte_carlo_learning(all_possible_states):
    
     
     run_var.last_e_total: int  = 0
-    run_inital_rate : float  = conf.learning_rate_start
-    rate : float  = conf.learning_rate_start
+    run_inital_rate : float  = conf.training.learning_rate_start
+    rate : float  = conf.training.learning_rate_start
     games_per_step: int = int(conf.total_games /conf.steps)
 
     #break the overall game count into steps 
     for episodes in tqdm(range(1,conf.total_games,games_per_step)):
         t_before_train = time.time()
         if episodes != 1:
-            if conf.agent_reload == None:
+            if conf.agent_reload == "None":
+                logging.debug("Multi core montecarlo agent reload == None triggered")
                 #Normal processing for learning by loading in stats and q values
                 combined_agent = MonteCarloAgent(rate, run_var.all_possible_states)
                 combined_agent.load_q_values(combined_q_values)
                 combined_agent.generate_returns_space_only()
-                agents = [combined_agent for core in range(conf.cores)]
+                agents = [combined_agent for core in range(conf.training.cores)]
             else:
+                logging.debug("Multi core montecarlo agent reload else triggered")
                 #Call a function that loads an agent from pickle 
-                agents = [conf.agent_reload for core in range(conf.cores)]
+                agents = [conf.agent_reload for core in range(conf.training.cores)]
         else :
             #specific setup for first time run 
             logging.debug(len(run_var.all_possible_states))
             agents = [setup_mc_class((run_var.all_possible_states,rate)
-                                        )  for core in range (conf.cores)]
+                                        )  for core in range (conf.training.cores)]
         
 
         logging.debug(f"main - Starting {episodes}")
         # steps to be given to each core
-        __steps_pc: int = int((games_per_step/conf.cores)+1)
-        configs = [(agents[_c],__steps_pc) for _c in range(conf.cores)]
+        __steps_pc: int = int((games_per_step/conf.training.cores)+1)
+        configs = [(agents[_c],__steps_pc) for _c in range(conf.training.cores)]
         
 
         #_-__-__-__-__-__-__-__-__-__-__-_
@@ -105,7 +107,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         logging.info(f"Current learning rate is : {rate}")
         multi_core_returns = multi_process_controller(mc_create_run_instance,
                                                         configs,
-                                                        conf.cores)
+                                                        conf.training.cores)
         
         t_after_train = time.time()
 
@@ -117,7 +119,7 @@ def multi_core_monte_carlo_learning(all_possible_states):
         run_var.training_rate.append(games_per_sec)
 
         #_-__-__-__-__-__-__-__-__-__-__-_                    
-        logging.debug(f"Trained {games_per_step} games over {conf.cores} cores in {time_taken_to_train} seconds")
+        logging.debug(f"Trained {games_per_step} games over {conf.training.cores} cores in {time_taken_to_train} seconds")
         logging.info(f"Training at {games_per_sec} g/s")
         logging.debug(f"main - multi core training returned {type(multi_core_returns)}")
         logging.debug(f"main - multi core training single returned {type(multi_core_returns[0])}")
@@ -147,14 +149,14 @@ def multi_core_monte_carlo_learning(all_possible_states):
         
         #TODO This functionality exists inside the fo the agent already
         total_wins, total_draws = test_agent.test(
-                                                    conf.test_games_per_step,
-                                                    conf.cores)
+                                                    conf.training.test_games_per_step,
+                                                    conf.training.cores)
         
         print(f"For Episodes :{run_var.last_e_total}")
         
         
         #print(f"Agent won {total_wins} out of {config.test_games} games.")
-        print(f"Winrate is {round((total_wins/conf.test_games_per_step)*100)}%")
+        print(f"Winrate is {round((total_wins/conf.training.test_games_per_step)*100)}%")
         print(f"Games drawn {total_draws}")
         #logs the 
         log_in_progress_mc_model(combined_agent, 
@@ -164,16 +166,16 @@ def multi_core_monte_carlo_learning(all_possible_states):
         run_var.overall_res[run_var.last_e_total] = (rate,
                                                     total_wins,
                                                     total_draws,
-                                                    conf.test_games_per_step)
+                                                    conf.training.test_games_per_step)
         
-        mlflow.log_metric("In Progress Win Rate", (total_wins/conf.test_games_per_step)*100 , step = episodes)
-        mlflow.log_metric("In Progress Draw Rate", (total_draws/conf.test_games_per_step)*100 , step = episodes)
-        mlflow.log_metric("In Progress Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100, step = episodes )
+        mlflow.log_metric("In Progress Win Rate", (total_wins/conf.training.test_games_per_step)*100 , step = episodes)
+        mlflow.log_metric("In Progress Draw Rate", (total_draws/conf.training.test_games_per_step)*100 , step = episodes)
+        mlflow.log_metric("In Progress Loss Rate", ((conf.training.test_games_per_step - (total_draws +total_wins))/conf.training.test_games_per_step)*100, step = episodes )
         mlflow.log_metric("In Progress Games Per Second",games_per_sec, step = episodes)
         
-    mlflow.log_metric("Final Win Rate", (total_wins/conf.test_games_per_step)*100 )
-    mlflow.log_metric("Final Draw Rate", (total_draws/conf.test_games_per_step)*100 )
-    mlflow.log_metric("Final Loss Rate", ((conf.test_games_per_step - (total_draws +total_wins))/conf.test_games_per_step)*100 )
+    mlflow.log_metric("Final Win Rate", (total_wins/conf.training.test_games_per_step)*100 )
+    mlflow.log_metric("Final Draw Rate", (total_draws/conf.training.test_games_per_step)*100 )
+    mlflow.log_metric("Final Loss Rate", ((conf.training.test_games_per_step - (total_draws +total_wins))/conf.training.test_games_per_step)*100 )
     mlflow.log_metric("Final Learning Rate", rate)
 
     save_path = save_path_generator(run_var, rate)

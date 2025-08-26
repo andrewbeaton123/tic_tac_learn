@@ -1,18 +1,50 @@
 #Module imports
 import logging 
 import mlflow
-
-
+import os
+from datetime import datetime
+from pathlib import Path
 
 #local imports
 
-from tic_tac_learn.src.control import Config_2_MC
+from tic_tac_learn.src.config_management import ConfigManager
 from tic_tac_learn.src.control.setup import pre_run_calculations_tasks
 from tic_tac_learn.monte_carlo_learning.flow_control import multi_core_monte_carlo_learning
 
 # confiig basics 
 mlflow.set_tracking_uri("http://homelab.mlflow")#("http://192.168.1.159:5000")
-logging.basicConfig(level="INFO")
+
+
+# Setup logging
+def setup_logging():
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"tic_tac_learn_{timestamp}.log"
+    
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Setup file handler
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    
+    # Setup console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    
+    # Setup root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+    
+    logging.info(f"Logging to file: {log_file}")
 
 
 def main():
@@ -27,26 +59,15 @@ def main():
       # and then would be imported into the place where you can play against the model.
 
 
+       # Setup logging first
+      setup_logging()
+    
+      config_manager = ConfigManager()
+      conf = config_manager.config
       
-      conf = Config_2_MC()
-      conf.total_games = int(1e9)
-      level = "TRAINING"
-      conf.experiment_name= "Tic Tac Learn 0.1.1"
-      conf.steps = 4
+      # Log which config is being used
+      logging.info(f"Using configuration: {os.getenv('TICLEARN_ENV', 'development')}")
 
-      conf.cores= 3
-      conf.learning_rate_start= 0.8
-      conf.learning_rate_min = 0.001
-      conf.learning_rate_scaling = 1
-      conf.test_games_per_step = 30000
-      conf.learning_rate_flat_games = conf.total_games* 0.2
-
-
-      conf.run_name = f"One Billion Games 4 Steps - {level} - {str(conf.total_games)}"
-      conf.custom_model_name = f"{conf.run_name}_2mc"
-      
-      
-      
       #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
       #End of User editable variables 
       #~~~~~~~~~~~~~~~~~~~-----------------~~~~~~~~~~~~~~~~~~~
@@ -54,7 +75,7 @@ def main():
       
       #TODO extract this code out and try and  make a base repeatable 
       
-      mlflow.set_experiment(experiment_name = f"{conf.experiment_name}")
+      mlflow.set_experiment(experiment_name = f"{conf.name}")
       
       with mlflow.start_run(run_name=f"{conf.run_name}"):
             multi_core_monte_carlo_learning(pre_run_calculations_tasks())

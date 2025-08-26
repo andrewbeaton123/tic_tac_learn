@@ -1,7 +1,7 @@
 import mlflow
-from tic_tac_learn.src.control import Config_2_MC
+from tic_tac_learn.src.config_management import ConfigManager
 
-def log_named_tuple_as_params(config: Config_2_MC):
+def log_named_tuple_as_params(config ):
     """
     Log the fields of a named tuple as MLflow parameters.
 
