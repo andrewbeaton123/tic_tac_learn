@@ -1,0 +1,13 @@
+name: "Tic Tac Learn 0.1.2 - Testing"
+mlflow_name: "mlflow_name"
+level: "DEBUG"
+total_games: 1_000
+steps: 10
+agent_reload: None
+training:
+  cores: 3
+  learning_rate_start: 0.8
+  learning_rate_min: 0.001
+  learning_rate_scaling: 1
+  test_games_per_step: 300
+  frozen_learning_rate_steps: 0
