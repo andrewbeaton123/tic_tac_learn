@@ -1,11 +1,11 @@
 name: "Tic Tac Learn 0.1.2 - Testing - 2"
-mlflow_name: "mlflow_name"
+mlflow_name: "Warmup testing"
 level: "DEBUG"
-total_games: 1_000
+total_games: 1_000_000
 steps: 10
 agent_reload: None
 training:
-  cores: 3
+  cores: 6
   learning_rate_start: 0.8
   learning_rate_min: 0.001
   learning_rate_scaling: 1
