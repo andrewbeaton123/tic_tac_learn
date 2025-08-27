@@ -85,7 +85,7 @@ class ExperimentConfig(BaseModel):
     
     @property
     def run_name(self) -> str:
-        return f"One Billion Games {self.steps} Steps - {self.level} - {self.total_games}"
+        return f"{self.mlflow_name} -- {self.steps} Steps - {self.level} - {self.total_games}"
 
     @property
     def custom_model_name(self) -> str:
