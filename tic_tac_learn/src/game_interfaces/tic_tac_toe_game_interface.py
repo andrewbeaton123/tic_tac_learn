@@ -14,6 +14,7 @@ class TicTacToeGameInterface(GameInterface):
                    game_state = None):
         
         self.config_manager = config_manager
+        self.initial_player = current_player  # Store the initial player
         self.current_player = current_player
         
         if game_state is None:
@@ -40,6 +41,8 @@ class TicTacToeGameInterface(GameInterface):
         
         try:
             self.game.make_move(row, col)
+            # SYNC THE CURRENT PLAYER from the underlying game object
+            self.current_player = self.game.current_player
             logging.debug(f"Player {self.current_player} successfully moved to position {position}")
             return True
         except ValueError as e: # Catch specific ValueError for invalid moves
@@ -101,6 +104,9 @@ class TicTacToeGameInterface(GameInterface):
     def reset(self):
         """Resets the game to its initial state."""
         self.game.reset()
+        # Explicitly reset the player to the initial player, working around dependency bug
+        self.current_player = self.initial_player
+        self.game.current_player = self.initial_player
 
     def get_possible_actions(self) -> list[int]:
         """Get a list of possible actions for the current state."""
@@ -116,6 +122,9 @@ class TicTacToeGameInterface(GameInterface):
         Returns:
             float: The reward for the player.
         """
+        if not self.is_game_over():
+            return 0.0  # No reward if game is not finished
+
         winner = self.get_winner()
         if winner == player_id:
             return 1.0  # Win
