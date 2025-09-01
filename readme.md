@@ -1,100 +1,83 @@
 # Tic Tac Toe Game with Reinforcement Learning
 
-
 ![Alt Text](https://i.makeagif.com/media/4-24-2016/N2q-9R.gif)
 
 This repository contains a Tic Tac Toe game that uses reinforcement learning techniques to train the game player. The ML approach uses Q-values, epsilon greedy selections, and multi-threading to learn and improve its gameplay.
 
-## Reinforcement Learning
+## Configuration
 
-The code learns by playing the game multiple times and updating the Q-values based on the outcomes of the games. An epsilon greedy selection strategy is used to balance exploration and exploitation during the learning process. The learning process is multi-threaded to speed up the training.
+The application uses YAML-based configuration files located in environment-specific folders under the `config/` directory. The environment is selected using the `TICLEARN_ENV` environment variable.
 
-## Configuration - 'Its always DNS'
+### Configuration Structure
 
-### tic_tac_learn_0.1.1 1 Billion game training session.
-The aim is to create a training session that trains a 1 billion  game model  using the git 0.1.1 version of tic tac learn. 
-
-The session will include a warmup session configuration and  a 1 billion parameter game with expected good training results. 
-
-#### Training session 
-
-```Python
-conf = Config_2_MC()
-conf.total_games = int(1e9)
-level = "TRAINING"
-conf.experiment_name= "Tic Tac Learn 0.1.1"
-conf.steps = 4
-
-conf.cores= 8
-conf.learning_rate_start= 0.8
-conf.learning_rate_min = 0.001
-conf.learning_rate_scaling = 1
-conf.test_games_per_step = 30000
-conf.learning_rate_flat_games = conf.total_games* 0.2
-
-
-conf.run_name = f"One Billion Games 4 Steps - {level} - {str(conf.total_games)}"
-conf.custom_model_name = f"{conf.run_name}_2mc"
 ```
-#### Warmup session 
-
-``` Python
-conf = Config_2_MC()
-    conf.total_games = int(1e6)
-    level = "WARMUP"
-    conf.experiment_name= "Tic Tac Learn 0.1.1"
-    conf.steps = 4
-    
-    conf.cores= 8
-    conf.learning_rate_start= 0.8
-    conf.learning_rate_min = 0.001
-    conf.learning_rate_scaling = 1
-    conf.test_games_per_step = 30000
-    conf.learning_rate_flat_games = conf.total_games* 0.2
-
-
-    conf.run_name = f"One Billion Games 4 Steps - {level} - {str(conf.total_games)}"
-    conf.custom_model_name = f"{conf.run_name}_2mc"
+config/
+├── development/
+│   └── config.yaml
+├── production/
+│   └── config.yaml
+└── debug/
+    └── config.yaml
 ```
+
+### Example Configuration (config.yaml)
+
+```yaml
+name: "Tic Tac Learn 0.1.2"
+mlflow_name: "mlflow_name"
+level: "TRAINING"
+total_games: 1_000_000_000  # 1e9
+steps: 4
+agent_reload: None
+
+training:
+  cores: 3
+  learning_rate_start: 0.8
+  learning_rate_min: 0.001
+  learning_rate_scaling: 1
+  test_games_per_step: 30000
+  learning_rate_flat_games: 200_000_000  # 20% of total_games
+```
+
+### Running with Different Configurations
+
+To run the application with a specific configuration:
 
 ```bash
-docker build -t tic_tac_learn_0.1.1:warmupsession .
+# Development configuration
+export TICLEARN_ENV=development
+python main.py
+
+# Production configuration
+export TICLEARN_ENV=production
+python main.py
 ```
+
+### Docker Usage
+
+Using Docker with specific configurations:
 
 ```bash
-docker tag tic_tac_learn_0.1.1:warmupsession  homelab.docker.general/tic_tac_learn_0.1.1:warmupsession
+# Build the image
+docker build -t tic_tac_learn:latest .
 
-docker push homelab.docker.general:5000/tic_tac_learn_0.1.1:warmupsession
+# Run with development configuration
+docker run -e TICLEARN_ENV=development tic_tac_learn:latest
 
-docker run homelab.docker.general:5000/tic_tac_learn_0.1.1:warmupsession
+# Run with production configuration
+docker run -e TICLEARN_ENV=production tic_tac_learn:latest
 ```
 
 
-###  Debug Session
-```Python
-conf = Config_2_MC()
-    conf.total_games = int(1e4)
-    level = "DEBUG"
-    conf.experiment_name= "Tic Tac Learn 0.1.1"
-    conf.steps = 4
-    
-    conf.cores= 8
-    conf.learning_rate_start= 0.8
-    conf.learning_rate_min = 0.001
-    conf.learning_rate_scaling = 1
-    conf.test_games_per_step = 30000
-    conf.learning_rate_flat_games = conf.total_games* 0.2
 
+## Training Sessions
 
-    conf.run_name = f"One Billion Games 4 Steps - {level} - {str(conf.total_games)}"
-    conf.custom_model_name = f"{conf.run_name}_2mc
-```
+Different training configurations are now managed through YAML files instead of code. Examples include:
 
-
-```
-docker build -t homelab.docker.general:5000/tic_tac_learn_0.1.1:debug .
-```
+- **Debug Session**: Use `config/debug/config.yaml` with smaller game counts
+- **Warmup Session**: Use `config/warmup/config.yaml` with moderate game counts
+- **Production Training**: Use `config/production/config.yaml` for full training runs
 
 ## Current Status
 
-Please note that this code is a work in progress.
+This is a work in progress. The configuration system has been updated to use YAML files and environment variables for better maintainability and deployment flexibility.

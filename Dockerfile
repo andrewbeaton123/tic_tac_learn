@@ -21,10 +21,14 @@ WORKDIR /usr/src/app
 
 # Install ONLY runtime dependencies (just git)
 RUN apk add --no-cache git
+
 # Copy only the installed Python packages
 COPY --from=builder /root/.local /root/.local
 
 COPY . .
 ENV PATH=/root/.local/bin:$PATH
+
+
+#ENV TICLEARN_ENV=dev-warmupsession
 
 CMD [ "python", "main.py"]
