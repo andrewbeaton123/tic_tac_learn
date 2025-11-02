@@ -2,7 +2,7 @@ from datetime import datetime
 import pickle as pkl
 import logging
 import mlflow
-from tic_tac_learn.src.control.run_variables import RunVariableCreator
+from tic_tac_learn.control.run_variables import RunVariableCreator
 from tic_tac_learn.monte_carlo_learning.monte_carlo_tic_tac_2 import MonteCarloAgent
 
 from tic_tac_learn.src.file_mangement.directory_creator import create_directory

@@ -4,7 +4,9 @@ An agent that performs Monte Carlo Q-learning using the game interface.
 
 import random
 from collections import defaultdict
-from tic_tac_learn.src.game_interfaces.game_interface_abc import GameInterface
+from tic_tac_learn.game_interfaces.game_interface_abc import GameInterface
+import logging
+
 
 def _create_nested_q_table():
     """
@@ -143,33 +145,64 @@ class MontecarloQlearningAgent:
         return self.q_table
 
 
-def merge_q_tables(q_tables: list[defaultdict]) -> defaultdict:
+def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> defaultdict:
     """
-    Merges a list of Q-tables into a single Q-table by averaging the values.
+    Merges multiple Q-tables using the specified strategy.
 
     Args:
-        q_tables (list[defaultdict]): A list of Q-tables to merge.
+        q_tables (list[defaultdict]): List of Q-tables to merge
+        merge_strategy (str): Strategy to use ('max', 'avg', 'weighted_avg')
 
     Returns:
-        defaultdict: The merged Q-table.
+        defaultdict: Merged Q-table
     """
     if not q_tables:
+        logging.warning("No Q-tables provided for merging")
         return defaultdict(_create_nested_q_table)
 
     merged_q_table = defaultdict(_create_nested_q_table)
-    # To calculate the average, we need to count how many times we've seen each state-action pair
-    state_action_counts = defaultdict(lambda: defaultdict(int))
+    merge_stats = {
+        'total_states': 0,
+        'total_actions': 0,
+        'max_q_value': float('-inf'),
+        'min_q_value': float('inf')
+    }
 
-    for q_table in q_tables:
-        for state, actions in q_table.items():
-            for action, q_value in actions.items():
-                merged_q_table[state][action] += q_value
-                state_action_counts[state][action] += 1
+    if merge_strategy == 'max':
+        # Take maximum Q-value for each state-action pair
+        for q_table in q_tables:
+            for state, actions in q_table.items():
+                for action, q_value in actions.items():
+                    current_q = merged_q_table[state][action]
+                    merged_q_table[state][action] = max(current_q, q_value)
+                    
+                    # Update statistics
+                    merge_stats['max_q_value'] = max(merge_stats['max_q_value'], q_value)
+                    merge_stats['min_q_value'] = min(merge_stats['min_q_value'], q_value)
 
-    # Now, divide by the counts to get the average
-    for state, actions in merged_q_table.items():
-        for action, total_q_value in actions.items():
-            count = state_action_counts[state][action]
-            merged_q_table[state][action] = total_q_value / count
+    else:  # 'avg' or 'weighted_avg'
+        state_action_counts = defaultdict(lambda: defaultdict(int))
+        
+        for q_table in q_tables:
+            for state, actions in q_table.items():
+                for action, q_value in actions.items():
+                    merged_q_table[state][action] += q_value
+                    state_action_counts[state][action] += 1
 
+        # Calculate averages and collect statistics
+        for state, actions in merged_q_table.items():
+            merge_stats['total_states'] += 1
+            for action, total_q_value in actions.items():
+                merge_stats['total_actions'] += 1
+                count = state_action_counts[state][action]
+                if count > 0:  # Protect against division by zero
+                    avg_q_value = total_q_value / count
+                    merged_q_table[state][action] = avg_q_value
+                    
+                    merge_stats['max_q_value'] = max(merge_stats['max_q_value'], avg_q_value)
+                    merge_stats['min_q_value'] = min(merge_stats['min_q_value'], avg_q_value)
+
+    # Log merge statistics
+    logging.info(f"Q-table merge completed: {merge_stats}")
+    
     return merged_q_table

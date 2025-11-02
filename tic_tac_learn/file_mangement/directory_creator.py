@@ -1,6 +1,6 @@
 import os 
 import logging 
-from tic_tac_learn.src.errors import SaveDirectoryAlreadyExistsError
+from tic_tac_learn.errors import SaveDirectoryAlreadyExistsError
 def create_directory(directory_path):
     # Check if the directory exists
     if not os.path.exists(directory_path):

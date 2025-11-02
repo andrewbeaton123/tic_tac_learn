@@ -3,6 +3,9 @@
 import logging
 
 from src.config_management import ConfigManager
+from tic_tac_toe_game_interface import TicTacToeGameInterface
+
+
 class GameInterfaceFactory:
     """Factory for creating game interfaces with proper validation."""
     
@@ -18,7 +21,10 @@ class GameInterfaceFactory:
         
         if game_type == "tic_tac_toe":
             #TODO Change this approach so that it can handle game additons 
-            return TicTacToeGameInterface(player_id, game_name=game_type, *args, **kwargs)
+            return TicTacToeGameInterface(player_id, 
+                                          game_name=game_type,
+                                        *args, 
+                                        **kwargs)
         elif game_type == "chess":
             # Future implementation
             # return ChessGameInterface(player_id, game_name=game_type, *args, **kwargs)

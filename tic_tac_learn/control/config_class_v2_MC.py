@@ -1,5 +1,47 @@
 import logging
-from tic_tac_learn.src.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+import mlflow
+
+
+from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+from collections import namedtuple
+
+# Define the named tuple
+Config_2_MC = namedtuple(
+    "Config_2_MC",
+    [
+        "run_name",
+        "game_interface",
+        "total_games",
+        "experiment_name",
+        "steps",
+        "cores",
+        "learning_rate_start",
+        "learning_rate_end",
+        "epsilon_start",
+        "epsilon_end",
+        "reward_draw",
+        "q_table_path",
+        "save_q_table_steps",
+        "save_q_table_final",
+        "save_results_video",
+        "save_results_plot",
+        "log_mlflow",
+        "mlflow_tracking_uri",
+        "video_dir",
+        "plot_dir",
+        "q_table_dir",
+        "log_dir",
+        "video_callable_frequency",
+        "test_game_frequency",
+        "test_games_n",
+        "test_game_interface",
+        "test_epsilon",
+        "log_file",
+        "merge_strategy",
+        "learning_rate_flat_games",
+        "frozen_learning_rate_steps"
+    ],
+)
 
 class Config_2_MC:
     _instance = None
@@ -16,17 +58,16 @@ class Config_2_MC:
             cls._instance._learning_rate_start = 1
             cls._instance._learning_rate_min = 0.01
             cls._instance._learning_rate_scaling = 1
-            cls._instance._learning_rate_flat_games = 0.1* cls._instance.total_games
 
             cls._instance._test_games_per_step = 1000
             cls._instance._discount_factor = 0.9
             cls._instance._exploration_rate = 0.1
 
 
-            cls._instance._frozen_learning_rate_steps = None
+            cls._instance.frozen_learning_rate_steps = None 
             cls._instance._games_per_step = None
             cls._instance._learning_rate_decay_rate = None
-
+            cls._instance.learning_rate_flat_games: int|None   = None
             cls._instance._agent_reload = None
             cls._instance.custom_model_name = "DefaultModelName" 
 
@@ -59,15 +100,18 @@ class Config_2_MC:
         # Ensure games_per_step is not zero to prevent division by zero
         if self.games_per_step == 0:
             logging.error("Config Error: 'games_per_step' is zero. Setting frozen_learning_rate_steps to 1.")
-            self._frozen_learning_rate_steps = 1
+            self.frozen_learning_rate_steps = 1
         else:
-            self._frozen_learning_rate_steps = (self.learning_rate_flat_games / self.games_per_step)
+            self.frozen_learning_rate_steps = int(self.learning_rate_flat_games / self.games_per_step)
         
         # Ensure frozen_learning_rate_steps is at least 1 if it's a positive value
-        if self._frozen_learning_rate_steps < 1 and self.learning_rate_flat_games > 0:
-            self._frozen_learning_rate_steps = 1
+        if self.frozen_learning_rate_steps < 1 and self.learning_rate_flat_games > 0:
+            self.frozen_learning_rate_steps = 1
+            
         elif self.learning_rate_flat_games == 0:
-            self._frozen_learning_rate_steps = 0 # No flat phase
+            self.frozen_learning_rate_steps = 0 # No flat phase
+
+        logging.debug(f"MC config frozen steps :{self.learning_rate_flat_games}")
 
         # Calculate learning rate decay rate
         decay_steps = self.steps - self.frozen_learning_rate_steps
@@ -84,6 +128,50 @@ class Config_2_MC:
         logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
         logging.debug(f"games_per_step = {self.games_per_step}")
         logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
+    
+    def log_to_mlflow(self):
+        """
+        Logs all configuration attributes to MLflow in organized parameter groups.
+        """
+        
+
+        # Group related parameters
+        param_groups = {
+            "training": {
+                "total_games": self.total_games,
+                "steps": self.steps,
+                "cores": self.cores,
+                "learning_rate_flat_games": self.learning_rate_flat_games
+            },
+            "learning_rates": {
+                "start": self.learning_rate_start,
+                "min": self.learning_rate_min,
+                "scaling": self.learning_rate_scaling,
+                "decay_rate": getattr(self, 'learning_rate_decay_rate', None),
+                "frozen_steps": self.frozen_learning_rate_steps
+            },
+            "testing": {
+                "games_per_step": self.test_games_per_step,
+                "discount_factor": self.discount_factor,
+                "exploration_rate": self.exploration_rate
+            },
+            "experiment": {
+                "name": self.experiment_name,
+                "run_name": self.run_name,
+                "custom_model_name": self.custom_model_name
+            }
+        }
+
+        # Log each parameter group with prefix
+        for group_name, params in param_groups.items():
+            for param_name, value in params.items():
+                if value is not None:  # Only log non-None values
+                    mlflow.log_param(f"{group_name}.{param_name}", value)
+
+        # Log calculated properties
+        if hasattr(self, '_games_per_step'):
+            mlflow.log_param("calculated.games_per_step", self._games_per_step)
+    
 
     @property
     def custom_model_name(self) -> str:
@@ -114,9 +202,18 @@ class Config_2_MC:
         self._agent_reload = agent_object
     
     @property
-    def frozen_learning_rate_steps(self) -> str:
-        """str: Gets the experiment name."""
+    def frozen_learning_rate_steps(self) -> int:
+        """int: Gets the number of steps with frozen learning rate."""
         return self._frozen_learning_rate_steps
+
+    @frozen_learning_rate_steps.setter
+    def frozen_learning_rate_steps(self, value: int) -> None:
+        """Sets the number of steps with frozen learning rate.
+        
+        Args:
+            value (int): The new number of frozen learning rate steps.
+        """
+        self._frozen_learning_rate_steps = value
     
     @property
     def run_name(self) -> str:
@@ -232,19 +329,6 @@ class Config_2_MC:
         """
         self._learning_rate_scaling = value
 
-    @property
-    def learning_rate_flat_games(self) -> float:
-        """float: Gets the number of games for which learning rate is flat."""
-        return self._learning_rate_flat_games
-
-    @learning_rate_flat_games.setter
-    def learning_rate_flat_games(self, value: float) -> None:
-        """Sets the number of games for which learning rate is flat.
-        
-        Args:
-            value (float): The new number of flat learning rate games.
-        """
-        self._learning_rate_flat_games = value
 
     @property
     def test_games_per_step(self) -> int:
@@ -287,3 +371,5 @@ class Config_2_MC:
             value (float): The new exploration rate.
         """
         self._exploration_rate = value
+
+    

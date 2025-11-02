@@ -3,17 +3,19 @@
 Orchestrates the parallel training of Monte Carlo agents using the multi_process_controller.
 """
 import logging
-import pickle
 import mlflow
+import pickle
+from tqdm import tqdm
+import numpy as np
+import random
 import time
 import os
-import random 
 from collections import defaultdict
 
-from tic_tac_learn.src.control import Config_2_MC
-from tic_tac_learn.src.execution.multi_process_controller import multi_process_controller
-from tic_tac_learn.src.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
-from tic_tac_learn.src.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+from tic_tac_learn.control import Config_2_MC
+from tic_tac_learn.execution.multi_process_controller import multi_process_controller
+from tic_tac_learn.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
+from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
 
 def training_worker(config: dict) -> defaultdict:
     """
@@ -229,7 +231,7 @@ def run_parallel_training(conf: Config_2_MC):
             logging.error(f"Failed to save or log Q-table artifact for step {step + 1}: {e}")
 
         # Update learning rate for the next step (simple linear decay example)
-        if step < conf.learning_rate_flat_games:
+        if step < conf.frozen_learning_rate_steps:
             # Flat learning rate phase
             pass
         else:
