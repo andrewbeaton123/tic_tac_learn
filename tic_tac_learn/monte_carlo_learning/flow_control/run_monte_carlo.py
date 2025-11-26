@@ -41,10 +41,11 @@ def training_worker(config: dict) -> defaultdict:
 
     conf = Config_2_MC() # The config is a singleton, so this retrieves the instance
 
+    
     # Each process needs its own game interface instance
     game_interface = TicTacToeGameInterface(
         current_player=player_id,
-        config_manager=conf
+        allowed_players=conf.get_allowed_players()
     )
 
     # 2. Create the agent, using parameters from the shared config instance
@@ -63,7 +64,10 @@ def training_worker(config: dict) -> defaultdict:
     logging.info(f"Worker finished training.")
     return q_table
 
-def test_agent(q_table: defaultdict, num_test_games: int, player_id: int, config_manager: Config_2_MC) -> dict:
+def test_agent(q_table: defaultdict, 
+               num_test_games: int, 
+               player_id: int, 
+               config_manager: Config_2_MC) -> dict:
     """
     Tests the performance of the agent with the given Q-table.
     The agent plays against a random opponent.
@@ -77,6 +81,7 @@ def test_agent(q_table: defaultdict, num_test_games: int, player_id: int, config
     Returns:
         dict: A dictionary containing win, loss, and draw counts.
     """
+    conf = Config_2_MC()
     wins = 0
     losses = 0
     draws = 0
@@ -84,7 +89,9 @@ def test_agent(q_table: defaultdict, num_test_games: int, player_id: int, config
     # Set a seed for reproducibility during testing
     random.seed(42) 
 
-    test_game_interface = TicTacToeGameInterface(current_player=player_id, config_manager=config_manager)
+    test_game_interface = TicTacToeGameInterface(current_player=player_id,
+                                                allowed_players=conf.get_allowed_players())
+    
     test_agent_instance = MontecarloQlearningAgent(
         game_interface=test_game_interface,
         player_id=player_id,

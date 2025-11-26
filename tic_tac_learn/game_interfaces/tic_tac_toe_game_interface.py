@@ -3,17 +3,17 @@
 import logging 
 from .game_interface_abc import GameInterface
 from .utils  import InvalidPlayerError
-from typing import Any
+from typing import Any, List
 from tic_tac_toe_game.game import TicTacToe
 
 
 class TicTacToeGameInterface(GameInterface):
 
     def __init__ (self, current_player: int ,
-                  config_manager,
+                  allowed_players:List[int],
                    game_state = None):
         
-        self.config_manager = config_manager
+        self.allowed_players = allowed_players
         self.initial_player = current_player  # Store the initial player
         self.current_player = current_player
         
@@ -25,11 +25,11 @@ class TicTacToeGameInterface(GameInterface):
             self.game = TicTacToe(current_player, board=board_list)
         
         if not self.check_player_is_valid(self.current_player):
-            raise InvalidPlayerError(f"Invalid player {self.current_player} is not in {self.config_manager.get_allowed_players()}")
+            raise InvalidPlayerError(f"Invalid player {self.current_player} is not in {self.allowed_players}")
     
     def check_player_is_valid(self, player_number: int ) -> bool:
         # Assuming config_manager has a method to get allowed players
-        return  player_number in self.config_manager.get_allowed_players()
+        return  player_number in self.allowed_players
     
 
     def make_move(self, position: int) -> bool:

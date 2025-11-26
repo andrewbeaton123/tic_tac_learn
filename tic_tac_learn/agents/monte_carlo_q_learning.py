@@ -29,8 +29,11 @@ class MontecarloQlearningAgent:
         q_table (defaultdict): The Q-table storing state-action values.
     """
 
-    def __init__(self, game_interface: GameInterface, player_id: int,
-                 learning_rate: float = 0.1, discount_factor: float = 0.9,
+    def __init__(self, 
+                 game_interface: GameInterface, 
+                 player_id: int,
+                 learning_rate: float = 0.1,
+                 discount_factor: float = 0.9,
                  exploration_rate: float = 0.1,
                  initial_q_table: defaultdict | None = None):
         """
