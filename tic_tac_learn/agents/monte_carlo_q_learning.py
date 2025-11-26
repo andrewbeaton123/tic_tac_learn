@@ -160,6 +160,10 @@ def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> 
         logging.warning("No Q-tables provided for merging")
         return defaultdict(_create_nested_q_table)
 
+    if merge_strategy not in ['max']:
+        logging.error(f"Merge Q tables recieved an invalid merge strategy : {str(merge_strategy)}")
+        raise ValueError(f"Merge Q tables recieved an invalid merge strategy : {str(merge_strategy)}")
+    
     merged_q_table = defaultdict(_create_nested_q_table)
     merge_stats = {
         'total_states': 0,

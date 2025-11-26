@@ -17,6 +17,17 @@ from tic_tac_learn.execution.multi_process_controller import multi_process_contr
 from tic_tac_learn.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
 
+
+def add_exploration_noise(q_table: defaultdict, noise_scale=0.1) -> defaultdict:
+    """Add random noise to Q-table values to encourage exploration."""
+    noisy_q_table = defaultdict(_create_nested_q_table)
+    for state in q_table:
+        for action in q_table[state]:
+            noise = np.random.normal(0, noise_scale)
+            noisy_q_table[state][action] = q_table[state][action] + noise
+    return noisy_q_table
+
+
 def training_worker(config: dict) -> defaultdict:
     """
     This is the target function for each process in the pool.
@@ -141,7 +152,7 @@ def run_parallel_training(conf: Config_2_MC):
     """
     Sets up and executes the multi-process training run with step-by-step testing.
     """
-    master_q_table = defaultdict(_create_nested_q_table)
+    master_q_table =add_exploration_noise(defaultdict(_create_nested_q_table))
     total_games_played = 0
 
     # Calculate games per step for each core
@@ -158,7 +169,7 @@ def run_parallel_training(conf: Config_2_MC):
         training_configs = []
         for _ in range(conf.cores):
             training_configs.append({
-                "player_id": 1, 
+                "player_id": conf.training_player, 
                 "num_episodes": games_per_step_per_core,
                 "current_q_table": master_q_table, # Pass the current master Q-table
                 "learning_rate": current_learning_rate

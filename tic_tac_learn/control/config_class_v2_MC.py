@@ -39,7 +39,8 @@ Config_2_MC = namedtuple(
         "log_file",
         "merge_strategy",
         "learning_rate_flat_games",
-        "frozen_learning_rate_steps"
+        "frozen_learning_rate_steps",
+        "training_player"
     ],
 )
 
@@ -70,6 +71,9 @@ class Config_2_MC:
             cls._instance.learning_rate_flat_games: int|None   = None
             cls._instance._agent_reload = None
             cls._instance.custom_model_name = "DefaultModelName" 
+
+            cls._instance._training_player = None
+
 
         
         return cls._instance
@@ -172,6 +176,15 @@ class Config_2_MC:
         if hasattr(self, '_games_per_step'):
             mlflow.log_param("calculated.games_per_step", self._games_per_step)
     
+
+    @property
+    def training_player(self) -> int:
+        return self._training_player
+    
+    @training_player.setter
+    def training_player(self, player : int):
+        self._training_player = player
+
 
     @property
     def custom_model_name(self) -> str:
