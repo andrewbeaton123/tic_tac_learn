@@ -5,8 +5,10 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from collections import defaultdict
-
-from tic_tac_learn.agents.monte_carlo_q_learning import merge_q_tables, _create_nested_q_table
+from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+from tic_tac_learn.agents.monte_carlo_q_learning import (merge_q_tables,
+                                                        _create_nested_q_table,
+                                                         MontecarloQlearningAgent)
 
 @pytest.fixture
 def empty_q_table():
@@ -31,6 +33,7 @@ def sample_q_tables():
     return q1, q2
 
 class TestQTableMerging:
+
     """Test suite for Q-table merging functionality"""
     
     def test_empty_merge_returns_valid_defaultdict(self, empty_q_table):
@@ -90,3 +93,17 @@ class TestQTableMerging:
         
         with pytest.raises(ValueError):
             merge_q_tables([q1, q2], merge_strategy=invalid_strategy)
+
+
+
+class TestMontecarloQlearningAgent():
+    
+    
+    @pytest.fixture()
+    def game_interface():
+        return TicTacToeGameInterface(
+            1,
+            [1,2]
+        )
+
+    agent = MontecarloQlearningAgent(game_interface, 1)
