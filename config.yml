@@ -41,7 +41,7 @@ monte_carlo_settings:
   run_name: "Refactor testing from_config - adding starting q noise"
   total_games: 1500000
   experiment_name: "Tic Tac Dev"
-  steps: 200
+  steps: 1
   cores: 6
   learning_rate_start: 1
   learning_rate_min: 0.001

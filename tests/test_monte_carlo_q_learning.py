@@ -100,10 +100,27 @@ class TestMontecarloQlearningAgent():
     
     
     @pytest.fixture()
-    def game_interface():
+    def game_interface(self):
         return TicTacToeGameInterface(
             1,
             [1,2]
         )
+    
+    @pytest.fixture()
+    def agent(self,
+              game_interface) : 
+        """Returns a fresh MontecarloQlearningAgent instance for each test"""
+        return MontecarloQlearningAgent(game_interface,
+                                        1)
+    
 
-    agent = MontecarloQlearningAgent(game_interface, 1)
+    def test_init_sets_defaults(self, agent : MontecarloQlearningAgent):
+        
+        assert agent.player_id == 1
+        assert agent.learning_rate == 0.1 
+        assert agent.discount_factor == 0.9 
+        assert agent.exploration_rate ==  0.1 
+
+        from collections import defaultdict as _dd
+        assert isinstance(agent.q_table, _dd)
+        nested = agent.q_table[()]
