@@ -163,7 +163,7 @@ def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> 
         logging.warning("No Q-tables provided for merging")
         return defaultdict(_create_nested_q_table)
 
-    if merge_strategy not in ['max']:
+    if merge_strategy not in ['max','avg']:
         logging.error(f"Merge Q tables recieved an invalid merge strategy : {str(merge_strategy)}")
         raise ValueError(f"Merge Q tables recieved an invalid merge strategy : {str(merge_strategy)}")
     
@@ -187,7 +187,7 @@ def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> 
                     merge_stats['max_q_value'] = max(merge_stats['max_q_value'], q_value)
                     merge_stats['min_q_value'] = min(merge_stats['min_q_value'], q_value)
 
-    else:  # 'avg' or 'weighted_avg'
+    elif merge_strategy == "avg":  # 'avg' or 'weighted_avg'
         state_action_counts = defaultdict(lambda: defaultdict(int))
         
         for q_table in q_tables:
@@ -208,6 +208,9 @@ def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> 
                     
                     merge_stats['max_q_value'] = max(merge_stats['max_q_value'], avg_q_value)
                     merge_stats['min_q_value'] = min(merge_stats['min_q_value'], avg_q_value)
+    
+    else: 
+        raise ValueError(f"Incorrect merge strategy supplie: {merge_strategy}")
 
     # Log merge statistics
     logging.info(f"Q-table merge completed: {merge_stats}")
