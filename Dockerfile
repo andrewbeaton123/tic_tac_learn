@@ -34,7 +34,7 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
 COPY --from=builder /app/tic_tac_learn ./tic_tac_learn
 
-ENV PYTHONPATH=/app:$PYTHONPATH \
+ENV PYTHONPATH=/app \
     TICLEARN_ENV=development
 
 CMD ["python", "-m", "tic_tac_learn"]

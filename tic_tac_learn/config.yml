@@ -38,16 +38,16 @@ games:
 
 # Settings for the Monte Carlo run
 monte_carlo_settings:
-  run_name: "Refactor testing from_config - adding starting q noise"
-  total_games: 1500000
+  run_name: "Refactor testing from_config - Game change -engine-improvements PR1"
+  total_games: 10000000
   experiment_name: "Tic Tac Dev"
-  steps: 1
-  cores: 6
-  learning_rate_start: 1
+  steps: 10
+  cores: 12
+  learning_rate_start: 0.8
   learning_rate_min: 0.001
-  learning_rate_scaling: 1.0
+  learning_rate_scaling: 2.0
   test_games_per_step: 3000
-  learning_rate_flat_games: 1500000
+  learning_rate_flat_games: 2500000
   custom_model_name: "Final Model as artifact"
   discount_factor: 0.9 # Discount factor (gamma) for future rewards
   exploration_rate: 0.4 # Exploration rate (epsilon) for epsilon-greedy policy

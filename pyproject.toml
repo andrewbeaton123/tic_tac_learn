@@ -17,7 +17,7 @@ numpy = "*"
 mlflow = "*"
 tqdm = "*"
 recordclass = "*"
-tic-tac-toe-game = { git = "https://github.com/andrewbeaton123/tic_tac_toe_game.git", rev = "223ac92c87e360b06ba3dca543a3f25202237c28" }
+tic-tac-toe-game = { git = "https://github.com/andrewbeaton123/tic_tac_toe_game.git", branch ='engine-improvements'} #rev = "223ac92c87e360b06ba3dca543a3f25202237c28" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"

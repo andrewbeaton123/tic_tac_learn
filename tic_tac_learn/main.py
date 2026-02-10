@@ -37,7 +37,7 @@ def main():
     """Main execution function."""
     # 1. Load Configuration from file
     logging.info("Loading configuration from config.yml...")
-    config_data = load_config('config.yml')
+    config_data = load_config('tic_tac_learn/config.yml')
     mc_settings = config_data.get('monte_carlo_settings', {})
     
     mlflow.set_experiment(experiment_name=mc_settings["experiment_name"])
