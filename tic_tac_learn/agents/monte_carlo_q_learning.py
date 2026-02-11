@@ -143,7 +143,7 @@ class MontecarloQlearningAgent:
             self.update_q_table(episode_history, reward)
 
             if (episode + 1) % 1000 == 0:
-                print(f"Episode {episode + 1}/{num_episodes} completed.")
+                logging.debug(f"Episode {episode + 1}/{num_episodes} completed.")
         
         return self.q_table
 
