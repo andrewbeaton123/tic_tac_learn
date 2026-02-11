@@ -1,8 +1,9 @@
 import logging
 import mlflow
-
+from typing import Optional, Dict, Any
 
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+from tic_tac_learn.control.learning_rate_decay.decay_rate_types import DecayType
 from collections import namedtuple
 
 # Define the named tuple
@@ -133,6 +134,53 @@ class Config_2_MC:
         logging.debug(f"games_per_step = {self.games_per_step}")
         logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
     
+
+    def parse_decay_type(self, value : Optional[str]) -> DecayType : 
+
+        """
+        Checks that the value of the decay rate method 
+        is in the enums class and so implimented
+        
+        :param value: Description
+        :type value: Optional[str]
+        :return: IN code name of the decay rate method
+        :rtype: DecayType
+        """
+        if not value: 
+            raise ValueError( "No decay type provided in config")
+        
+        v= value.strip().lower()
+        for memeber in DecayType: 
+            if memeber.value == v or memeber.name.lower() == v: 
+                return memeber
+        raise ValueError(f"Unknown decay type: {value}")
+
+    def resolve_decay_method(self,
+                             algorithm : Optional[str] = "monte_carlo"):
+        
+
+        global_decay = self.config_dict.get("decay", {}) or {}
+        algo_decay = {}
+
+        if algorithm : # This will always trigger due to default value
+            algo_key = f"{algorithm}_settings"
+            algo_section = self.config_dict.get( algo_key, {}) or {}
+            algo_decay = algo_section.get("decay", {}) or {}
+
+        merged_raw = {**global_decay, ** algo_decay}
+         # merge nested params dicts (algorithm params override global params)
+        global_params = global_decay.get("params", {}) or {}
+        algo_params = algo_decay.get("params", {}) or {}
+        merged_params = {**global_params, **algo_params}
+
+        merged_raw["params"] = merged_params
+
+        decay_type_raw = merged_raw.get("type")
+        decay_type_enum: Optional[DecayType] = None
+        if decay_type_raw is not None:
+            decay_type_enum = self.parse_decay_type(decay_type_raw)
+
+        return {"type": decay_type_enum, "params": merged_params, "raw": merged_raw}
     def log_to_mlflow(self):
         """
         Logs all configuration attributes to MLflow in organized parameter groups.

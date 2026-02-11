@@ -16,7 +16,7 @@ from tic_tac_learn.control import Config_2_MC
 from tic_tac_learn.execution.multi_process_controller import multi_process_controller
 from tic_tac_learn.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
-
+from tic_tac_learn.control.learning_rate_decay.decay_rate_calulator import e_decay
 
 def add_exploration_noise(q_table: defaultdict, noise_scale=0.1) -> defaultdict:
     """Add random noise to Q-table values to encourage exploration."""
@@ -257,6 +257,8 @@ def run_parallel_training(conf: Config_2_MC):
             current_learning_rate = max(conf.learning_rate_min,
                                         current_learning_rate - conf.learning_rate_decay_rate)
             logging.info(f"Updated learning rate to {current_learning_rate:.4f} for next step.")
+
+            
 
     logging.info("\n--- All Training Steps Completed ---")
 

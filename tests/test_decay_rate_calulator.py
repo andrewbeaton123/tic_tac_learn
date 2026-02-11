@@ -1,6 +1,6 @@
 import math
 import pytest
-from tic_tac_learn.agents.decay_rate_calulator import e_decay
+from tic_tac_learn.control.learning_rate_decay.decay_rate_calulator import e_decay
 
 def test_e_decay_step_zero_returns_starting_rate():
     assert e_decay(0, 0.75, 5.0) == pytest.approx(0.75)
