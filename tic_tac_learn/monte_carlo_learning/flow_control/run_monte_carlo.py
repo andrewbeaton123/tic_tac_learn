@@ -212,6 +212,8 @@ def run_parallel_training(conf: Config_2_MC):
 
         logging.info(f"Step {step + 1} duration: {step_duration:.2f} seconds")
         logging.info(f"Games per second (step {step + 1}): {games_per_second_step:.2f}")
+        
+        #TODO make mlflow optional 
         mlflow.log_metric("step_duration_seconds", step_duration, step=step)
         mlflow.log_metric("games_per_second_step", games_per_second_step, step=step)
         mlflow.log_metric("total_games_played", total_games_played, step=step)
@@ -220,7 +222,10 @@ def run_parallel_training(conf: Config_2_MC):
         # Agent Testing for this step
         num_test_games = conf.test_games_per_step
         logging.info(f"Starting agent testing for step {step + 1} with {num_test_games} games...")
-        test_results = test_agent(master_q_table, num_test_games, player_id=1, config_manager=conf)
+        test_results = test_agent(master_q_table, 
+                                  num_test_games,
+                                   player_id=1, 
+                                   config_manager=conf)
 
         win_percentage = (test_results["wins"] / num_test_games) * 100
         loss_percentage = (test_results["losses"] / num_test_games) * 100
@@ -240,6 +245,7 @@ def run_parallel_training(conf: Config_2_MC):
         q_table_artifact_dir = "q_tables"
         os.makedirs(q_table_artifact_dir, exist_ok=True)
         q_table_path_step = os.path.join(q_table_artifact_dir, f"q_table_step_{step + 1}.pkl")
+        
         try:
             with open(q_table_path_step, "wb") as f:
                 pickle.dump(dict(master_q_table), f)
@@ -257,7 +263,8 @@ def run_parallel_training(conf: Config_2_MC):
             current_learning_rate = max(conf.learning_rate_min,
                                         current_learning_rate - conf.learning_rate_decay_rate)
             logging.info(f"Updated learning rate to {current_learning_rate:.4f} for next step.")
-
+            conf.de
+    
             
 
     logging.info("\n--- All Training Steps Completed ---")

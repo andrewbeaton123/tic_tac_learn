@@ -41,7 +41,8 @@ Config_2_MC = namedtuple(
         "merge_strategy",
         "learning_rate_flat_games",
         "frozen_learning_rate_steps",
-        "training_player"
+        "training_player",  
+        "learning_rate_method"
     ],
 )
 
@@ -68,10 +69,12 @@ class Config_2_MC:
 
             cls._instance.frozen_learning_rate_steps = None 
             cls._instance._games_per_step = None
-            cls._instance._learning_rate_decay_rate = None
+            
             cls._instance.learning_rate_flat_games: int|None   = None
             cls._instance._agent_reload = None
             cls._instance.custom_model_name = "DefaultModelName" 
+            cls._instance.learning_rate_method = None
+            cls._decay_steps = None
 
             cls._instance._training_player = None
 
@@ -119,20 +122,21 @@ class Config_2_MC:
         logging.debug(f"MC config frozen steps :{self.learning_rate_flat_games}")
 
         # Calculate learning rate decay rate
-        decay_steps = self.steps - self.frozen_learning_rate_steps
-        if decay_steps <= 0: # Prevent division by zero or negative steps for decay
-            logging.warning("Config Warning: Decay steps are zero or negative. Learning rate will not decay.")
-            self.learning_rate_decay_rate = 0.0
-        else:
-            self.learning_rate_decay_rate = round(self.learning_rate_scaling *
-                                                        (self.learning_rate_start -
-                                                        self.learning_rate_min
-                                                        ) / decay_steps, 4)
+        
+
+        self.decay_steps = (self.steps - self.frozen_learning_rate_steps)
+        
+        self.learning_rate_method =  self.resolve_decay_method("monte_carlo")
+
+        self.learning_rate_min = self.learning_rate_method.get("params",{}).get("min_value", 0)
+        self.learning_rate_start = self.learning_rate_method.get("params",{}).get("initial", 0)
+        
+
         
         logging.info("Monte Carlo Pre run calculations finished.")
         logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
         logging.debug(f"games_per_step = {self.games_per_step}")
-        logging.debug(f"learning_rate_decay_rate = {self.learning_rate_decay_rate}")
+        logging.debug(f"learning_rate_method = {self.learning_rate_method}")
     
 
     def parse_decay_type(self, value : Optional[str]) -> DecayType : 
@@ -158,6 +162,9 @@ class Config_2_MC:
     def resolve_decay_method(self,
                              algorithm : Optional[str] = "monte_carlo"):
         
+        ## This handles there being multiple decay methods per 
+        # training method. 
+        # TODO - Generalize this function to handle any variable
 
         global_decay = self.config_dict.get("decay", {}) or {}
         algo_decay = {}
@@ -181,6 +188,7 @@ class Config_2_MC:
             decay_type_enum = self.parse_decay_type(decay_type_raw)
 
         return {"type": decay_type_enum, "params": merged_params, "raw": merged_raw}
+    
     def log_to_mlflow(self):
         """
         Logs all configuration attributes to MLflow in organized parameter groups.
@@ -199,8 +207,8 @@ class Config_2_MC:
                 "start": self.learning_rate_start,
                 "min": self.learning_rate_min,
                 "scaling": self.learning_rate_scaling,
-                "decay_rate": getattr(self, 'learning_rate_decay_rate', None),
-                "frozen_steps": self.frozen_learning_rate_steps
+                "frozen_steps": self.frozen_learning_rate_steps,
+                "learning_rate_method": self.learning_rate_method
             },
             "testing": {
                 "games_per_step": self.test_games_per_step,
@@ -224,6 +232,24 @@ class Config_2_MC:
         if hasattr(self, '_games_per_step'):
             mlflow.log_param("calculated.games_per_step", self._games_per_step)
     
+
+    @property
+    def decay_steps(self) -> int | None:
+        return self.decay_steps
+    
+    @decay_steps.setter
+    def decay_steps(self,
+                    decay_steps : int):
+        self.decay_steps = decay_steps
+    
+    @property
+    def learning_rate_method(self) -> Dict | None:
+        return self._learning_rate_method
+    
+    @learning_rate_method.setter
+    def learning_rate_method(self,
+                             method_dict : Dict):
+        self._learning_rate_method = method_dict
 
     @property
     def training_player(self) -> int:

@@ -58,7 +58,6 @@ monte_carlo_settings:
       min_value: 0.01
 
   learning_rate_start: 0.8
-  learning_rate_min: 0.001
   learning_rate_scaling: 2.0
   test_games_per_step: 3000
   learning_rate_flat_games: 1000
