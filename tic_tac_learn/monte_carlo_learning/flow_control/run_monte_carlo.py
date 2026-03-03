@@ -253,7 +253,9 @@ def run_parallel_training(conf: Config_2_MC):
             logging.info(f"Logged Q-table for step {step + 1} to MLflow.")
         except Exception as e:
             logging.error(f"Failed to save or log Q-table artifact for step {step + 1}: {e}")
+        
 
+        
         # Update learning rate for the next step (simple linear decay example)
         if step < conf.frozen_learning_rate_steps:
             # Flat learning rate phase

@@ -42,7 +42,7 @@ Config_2_MC = namedtuple(
         "learning_rate_flat_games",
         "frozen_learning_rate_steps",
         "training_player",  
-        "learning_rate_method"
+        "learning_rate_dict"
     ],
 )
 
@@ -58,9 +58,6 @@ class Config_2_MC:
             cls._instance.total_games = 200
             cls._instance.steps = 10
             cls._instance.cores = 1
-            cls._instance._learning_rate_start = 1
-            cls._instance._learning_rate_min = 0.01
-            cls._instance._learning_rate_scaling = 1
 
             cls._instance._test_games_per_step = 1000
             cls._instance._discount_factor = 0.9
@@ -70,10 +67,10 @@ class Config_2_MC:
             cls._instance.frozen_learning_rate_steps = None 
             cls._instance._games_per_step = None
             
-            cls._instance.learning_rate_flat_games: int|None   = None
+            cls._instance.learning_rate_flat_games  = None
             cls._instance._agent_reload = None
             cls._instance.custom_model_name = "DefaultModelName" 
-            cls._instance.learning_rate_method = None
+            cls._instance.learning_rate_dict = None
             cls._decay_steps = None
 
             cls._instance._training_player = None
@@ -90,12 +87,13 @@ class Config_2_MC:
         for key, value in config_dict.items():
             if hasattr(self, key):
                 setattr(self, key, value)
+        self.config_dict = config_dict
     
     def pre_run_calculations(self): 
         # Calculations from user defined variables to code format
         # These must be run before the config class is used
         logging.info("Starting Monte Carlo Pre run calculations.")
-
+        self.learning_rate_dict =  self.resolve_decay_method("monte_carlo")
         # Ensure steps is not zero to prevent division by zero
         if self.steps == 0:
             logging.error("Config Error: 'steps' cannot be zero. Setting to 1.")
@@ -110,15 +108,9 @@ class Config_2_MC:
             logging.error("Config Error: 'games_per_step' is zero. Setting frozen_learning_rate_steps to 1.")
             self.frozen_learning_rate_steps = 1
         else:
-            self.frozen_learning_rate_steps = int(self.learning_rate_flat_games / self.games_per_step)
-        
-        # Ensure frozen_learning_rate_steps is at least 1 if it's a positive value
-        if self.frozen_learning_rate_steps < 1 and self.learning_rate_flat_games > 0:
-            self.frozen_learning_rate_steps = 1
-            
-        elif self.learning_rate_flat_games == 0:
-            self.frozen_learning_rate_steps = 0 # No flat phase
+            self.learning_rate_dict.get("learning_rate_frozen_steps") or 0 
 
+            
         logging.debug(f"MC config frozen steps :{self.learning_rate_flat_games}")
 
         # Calculate learning rate decay rate
@@ -126,17 +118,17 @@ class Config_2_MC:
 
         self.decay_steps = (self.steps - self.frozen_learning_rate_steps)
         
-        self.learning_rate_method =  self.resolve_decay_method("monte_carlo")
+        
 
-        self.learning_rate_min = self.learning_rate_method.get("params",{}).get("min_value", 0)
-        self.learning_rate_start = self.learning_rate_method.get("params",{}).get("initial", 0)
+        self.learning_rate_min = self.learning_rate_dict.get("params",{}).get("min_value", 0)
+        self.learning_rate_start = self.learning_rate_dict.get("params",{}).get("initial", 0)
         
 
         
         logging.info("Monte Carlo Pre run calculations finished.")
         logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
         logging.debug(f"games_per_step = {self.games_per_step}")
-        logging.debug(f"learning_rate_method = {self.learning_rate_method}")
+        logging.debug(f"learning_rate_dict = {self.learning_rate_dict}")
     
 
     def parse_decay_type(self, value : Optional[str]) -> DecayType : 
@@ -166,7 +158,7 @@ class Config_2_MC:
         # training method. 
         # TODO - Generalize this function to handle any variable
 
-        global_decay = self.config_dict.get("decay", {}) or {}
+        global_decay = self.config_dict.get("decay") or {}
         algo_decay = {}
 
         if algorithm : # This will always trigger due to default value
@@ -204,11 +196,12 @@ class Config_2_MC:
                 "learning_rate_flat_games": self.learning_rate_flat_games
             },
             "learning_rates": {
-                "start": self.learning_rate_start,
-                "min": self.learning_rate_min,
-                "scaling": self.learning_rate_scaling,
-                "frozen_steps": self.frozen_learning_rate_steps,
-                "learning_rate_method": self.learning_rate_method
+
+                "learning_rate_inital" : self.learning_rate_dict.get("params", {}).get("learning_rate_inital", "no parameter found"),
+                "learning_rate_min" : self.learning_rate_dict.get("params", {}).get("learning_rate_min", "no parameter found"),
+                "learning_rate_scaling" : self.learning_rate_dict.get("params", {}).get("learning_rate_scaling", "no parameter found"),
+                "scaling_frozen_steps" : self.learning_rate_dict.get("params", {}).get("scaling_frozen_steps", "no parameter found"),
+                "learning_rate_dict_raw": self.learning_rate_dict
             },
             "testing": {
                 "games_per_step": self.test_games_per_step,
@@ -240,16 +233,16 @@ class Config_2_MC:
     @decay_steps.setter
     def decay_steps(self,
                     decay_steps : int):
-        self.decay_steps = decay_steps
+        self._decay_steps = decay_steps
     
     @property
-    def learning_rate_method(self) -> Dict | None:
-        return self._learning_rate_method
+    def learning_rate_dict(self) -> Dict | None:
+        return self._learning_rate_dict
     
-    @learning_rate_method.setter
-    def learning_rate_method(self,
+    @learning_rate_dict.setter
+    def learning_rate_dict(self,
                              method_dict : Dict):
-        self._learning_rate_method = method_dict
+        self._learning_rate_dict = method_dict
 
     @property
     def training_player(self) -> int:
