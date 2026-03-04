@@ -94,6 +94,8 @@ class Config_2_MC:
         # These must be run before the config class is used
         logging.info("Starting Monte Carlo Pre run calculations.")
         self.learning_rate_dict =  self.resolve_decay_method("monte_carlo")
+
+        
         # Ensure steps is not zero to prevent division by zero
         if self.steps == 0:
             logging.error("Config Error: 'steps' cannot be zero. Setting to 1.")
@@ -116,7 +118,7 @@ class Config_2_MC:
         # Calculate learning rate decay rate
         
 
-        self.decay_steps = (self.steps - self.frozen_learning_rate_steps)
+        self.decay_steps = (self.steps - self.learning_rate_dict.get("learning_rate_frozen_steps", 0))
         
         
 
