@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
 from tic_tac_learn.control.learning_rate_decay.decay_rate_types import DecayType
 from collections import namedtuple
-
+from .config_base_class import ConfigBaseClass
 # Define the named tuple
 Config_2_MC = namedtuple(
     "Config_2_MC",
@@ -46,7 +46,7 @@ Config_2_MC = namedtuple(
     ],
 )
 
-class Config_2_MC:
+class Config_2_MC(ConfigBaseClass):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -71,10 +71,10 @@ class Config_2_MC:
             cls._instance._agent_reload = None
             cls._instance.custom_model_name = "DefaultModelName" 
             cls._instance.learning_rate_dict = None
+            cls._learning_rate_type = None 
             cls._decay_steps = None
 
             cls._instance._training_player = None
-
 
         
         return cls._instance
@@ -82,12 +82,7 @@ class Config_2_MC:
     def get_allowed_players(self) -> tuple[int, int]:
         return (1, 2)
 
-    def load_from_dict(self, config_dict: dict):
-        """Loads configuration from a dictionary."""
-        for key, value in config_dict.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-        self.config_dict = config_dict
+
     
     def pre_run_calculations(self): 
         # Calculations from user defined variables to code format
@@ -119,12 +114,13 @@ class Config_2_MC:
         
 
         self.decay_steps = (self.steps - self.learning_rate_dict.get("learning_rate_frozen_steps", 0))
-        
+        self.frozen_learning_rate_steps = self.learning_rate_dict.get("learning_rate_frozen_steps", 0)
         
 
         self.learning_rate_min = self.learning_rate_dict.get("params",{}).get("min_value", 0)
         self.learning_rate_start = self.learning_rate_dict.get("params",{}).get("initial", 0)
         
+        self.learning_rate_type = self.learning_rate_dict.get("params", {}).get("type", 0)
 
         
         logging.info("Monte Carlo Pre run calculations finished.")
@@ -227,7 +223,19 @@ class Config_2_MC:
         if hasattr(self, '_games_per_step'):
             mlflow.log_param("calculated.games_per_step", self._games_per_step)
     
+    
 
+
+    @property
+    def learning_rate_type(self) -> str | None:
+        return self.learning_rate_type
+    
+    @learning_rate_type.setter
+    def learning_rate_type(self,
+                    learning_rate_type : str):
+        self.n = learning_rate_type
+
+        
     @property
     def decay_steps(self) -> int | None:
         return self.decay_steps
