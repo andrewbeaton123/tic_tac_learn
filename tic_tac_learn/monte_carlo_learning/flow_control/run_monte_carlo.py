@@ -129,22 +129,22 @@ def test_agent(q_table: defaultdict,
         winner = test_game_interface.get_winner()
         
         # Add detailed logging for each test game result
-        if (i + 1) % (num_test_games // 10) == 0 or i == 0: # Log every 10% or first game
-            logging.debug(f"Test Game {i+1} - Final Board: {test_game_interface.get_state()}")
-            logging.debug(f"Test Game {i+1} - GameInterface Winner: {winner}")
-            logging.debug(f"Test Game {i+1} - Underlying Game Winner: {test_game_interface.game.winner}")
-            logging.debug(f"Test Game {i+1} - Game Over: {test_game_interface.is_game_over()}")
-            logging.debug(f"Test Game {i+1} - Valid Moves Left: {test_game_interface.get_valid_moves()}")
+        # if (i + 1) % (num_test_games // 10) == 0 or i == 0: # Log every 10% or first game
+        #     logging.debug(f"Test Game {i+1} - Final Board: {test_game_interface.get_state()}")
+        #     logging.debug(f"Test Game {i+1} - GameInterface Winner: {winner}")
+        #     logging.debug(f"Test Game {i+1} - Underlying Game Winner: {test_game_interface.game.winner}")
+        #     logging.debug(f"Test Game {i+1} - Game Over: {test_game_interface.is_game_over()}")
+        #     logging.debug(f"Test Game {i+1} - Valid Moves Left: {test_game_interface.get_valid_moves()}")
 
-        # Add new logging here to debug draw issue
-        if test_game_interface.is_game_over():
-            logging.debug(f"Game {i+1} ended. Winner: {winner}, Game Over: {test_game_interface.is_game_over()}, Valid Moves: {test_game_interface.get_valid_moves()}")
-            if winner == 0:
-                logging.debug(f"Game {i+1} identified as a DRAW.")
-            elif winner == player_id:
-                logging.debug(f"Game {i+1} identified as a WIN for player {player_id}.")
-            else:
-                logging.debug(f"Game {i+1} identified as a LOSS for player {player_id}.")
+        # # Add new logging here to debug draw issue
+        # if test_game_interface.is_game_over():
+        #     logging.debug(f"Game {i+1} ended. Winner: {winner}, Game Over: {test_game_interface.is_game_over()}, Valid Moves: {test_game_interface.get_valid_moves()}")
+        #     if winner == 0:
+        #         logging.debug(f"Game {i+1} identified as a DRAW.")
+        #     elif winner == player_id:
+        #         logging.debug(f"Game {i+1} identified as a WIN for player {player_id}.")
+        #     else:
+        #         logging.debug(f"Game {i+1} identified as a LOSS for player {player_id}.")
 
         if winner == player_id:
             wins += 1
@@ -261,6 +261,7 @@ def run_parallel_training(conf: Config_2_MC):
             # Flat learning rate phase
             pass
         else:
+            logging.debug(f"Decay Rate Type at step change is {conf.learning_rate_type}")
             # Decay phase
             current_learning_rate = max(conf.learning_rate_min,
                                         decay_from_name(conf.learning_rate_type, step) )

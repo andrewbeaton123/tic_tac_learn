@@ -1,5 +1,5 @@
 from abc import ABC
-
+from typing import Dict
 
 class ConfigBaseClass(ABC):
 
@@ -10,3 +10,10 @@ class ConfigBaseClass(ABC):
                 setattr(self, key, value)
         self.config_dict = config_dict
     
+    @property
+    def config(self) -> Dict: 
+        return self._config
+    
+    @config.setter
+    def config(self, loaded_config : Dict):
+        self._config = loaded_config

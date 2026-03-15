@@ -6,7 +6,7 @@ logging.basicConfig(level="DEBUG")
 # Configure logging to ensure DEBUG messages are shown
 log_formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.DEBUG)
 
 # Clear existing handlers to prevent duplicate output
 if root_logger.hasHandlers():
@@ -46,6 +46,7 @@ def main():
         #TODO Migrate this into a more generalized form. 
 
         conf = Config_2_MC()
+        conf.config = mc_settings
         conf.load_from_dict(mc_settings)
         conf.pre_run_calculations() # Ensure calculated properties are set
         conf.log_to_mlflow()
