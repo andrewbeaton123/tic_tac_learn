@@ -120,7 +120,7 @@ class Config_2_MC(ConfigBaseClass):
         self.learning_rate_min = self.learning_rate_dict.get("params",{}).get("min_value", 0)
         self.learning_rate_start = self.learning_rate_dict.get("params",{}).get("initial", 0)
         
-        self.learning_rate_type = self.config.get("decay", {}).get("type", "")
+        self.learning_rate_type = self.learning_rate_dict.get("type").name
 
         
         logging.info("Monte Carlo Pre run calculations finished.")
@@ -462,4 +462,3 @@ class Config_2_MC(ConfigBaseClass):
         """
         self._exploration_rate = value
 
-    

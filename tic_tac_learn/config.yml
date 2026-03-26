@@ -51,16 +51,15 @@ monte_carlo_settings:
   steps: 10
   cores: 12
   decay: 
-    type: LINEAR
+    type: CONSTANT # LINEAR
     params: 
       learning_rate_frozen_steps: 1
       learning_rate_scaling: 1 
       learning_rate_inital: 0.7
       learning_rate_min: 0.01
-      learning_rate_scaling: 1
 
-  learning_rate_start: 0.8
-  learning_rate_scaling: 2.0
+  #learning_rate_start: 0.8
+  #learning_rate_scaling: 2.0
   test_games_per_step: 3000
   learning_rate_flat_games: 1000
   custom_model_name: "Final Model as artifact"

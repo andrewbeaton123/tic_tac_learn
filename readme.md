@@ -25,13 +25,20 @@ monte_carlo_settings:
   experiment_name: "Tic Tac Dev"
   steps: 10
   cores: 4
-  learning_rate_start: 0.6
+  decay: 
+    type: LINEAR
+    params: 
+      learning_rate_frozen_steps: 1
+      learning_rate_scaling: 1 
+      learning_rate_inital: 0.7
+      learning_rate_min: 0.01
+  test_games_per_step: 3000
   # ... and other parameters
 ```
 
 ### 2. Initialization
 
-When `main.py` is executed, it loads the settings from `config.yml` into a configuration object.
+When `main.py` is executed, it uses `ConfigManager` to load the settings from `config.yml` into a configuration object.
 
 ### 3. Parallel Training
 

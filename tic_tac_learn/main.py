@@ -2,11 +2,11 @@
 import logging 
 import sys
 
-logging.basicConfig(level="DEBUG")
+logging.basicConfig(level="INFO")
 # Configure logging to ensure DEBUG messages are shown
 log_formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
+root_logger.setLevel(logging.INFO)
 
 # Clear existing handlers to prevent duplicate output
 if root_logger.hasHandlers():

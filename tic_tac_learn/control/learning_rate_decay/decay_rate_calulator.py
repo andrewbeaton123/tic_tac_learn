@@ -19,6 +19,11 @@ def e_decay(step : int,
     
     return float(starting_learning_rate * maths.e**(step*decay_rate))
 
+def constant_learning_rate( 
+                            starting_learning_rate : float ) -> float : 
+    
+    return starting_learning_rate
+
 
 def linear_decay(step: int, 
                 learning_rate_scaling : float,
