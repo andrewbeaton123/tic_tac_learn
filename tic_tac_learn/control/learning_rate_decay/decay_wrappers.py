@@ -5,35 +5,26 @@ from typing import Optional
 
 #TODO  Shoudl improve from the lazy importing
 
-def _constant_decay_from_config(step : int,
-                                conf : Optional['Config_2_MC'] = None) -> float :
-    from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
-    conf = conf or Config_2_MC
+def _constant_decay_from_config(step: int, conf=None) -> float:
     params = (conf.learning_rate_dict or {}).get("params", {}) or {}
-    
-    return constant_learning_rate(params.get("learning_rate_inital",1))
+    return constant_learning_rate(params.get("learning_rate_inital", 1.0))
 
-def _e_decay_from_config(step: int, 
-                         conf : Optional['Config_2_MC'] = None) -> float :
-    from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
-    conf = conf or Config_2_MC()
-    params  = (conf.learning_rate_dict or {}).get("params", {}) or {}
-    decay_rate = params.get("decay_rate",params.get("rate",0.0))
-    return e_decay(step,
-                   params.learning_rate_inital,
-                   decay_rate)
-
-
-def _linear_decay_from_config( step : int , 
-                              conf: Optional['Config_2_MC'] = None ) -> float: 
-    from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
-    conf = conf or Config_2_MC() 
+def _e_decay_from_config(step: int, conf=None) -> float:
     params = (conf.learning_rate_dict or {}).get("params", {}) or {}
-    learning_rate_inital = params.get("learning_rate_inital",1)
-    scaling_rate_scaling  = params.get("learning_rate_scaling", 1)
-    learning_rate_min  = params.get("learning_rate_min", 0)
+    decay_rate = params.get("decay_rate", params.get("rate", 0.0))
+    learning_rate_inital = params.get("learning_rate_inital", 1.0)
+    return e_decay(step, learning_rate_inital, decay_rate)
+
+def _linear_decay_from_config(step: int, conf=None) -> float:
+    params = (conf.learning_rate_dict or {}).get("params", {}) or {}
+    learning_rate_inital = params.get("learning_rate_inital", 1.0)
+    scaling_rate_scaling = params.get("learning_rate_scaling", 1.0)
+    learning_rate_min = params.get("learning_rate_min", 0.0)
     scaling_frozen_steps = params.get("scaling_frozen_steps", 0)
-    decay_steps = params.steps - scaling_frozen_steps
+    
+    # Use conf.steps instead of params.steps to avoid AttributeError on dict
+    total_steps = getattr(conf, 'steps', 10)
+    decay_steps = total_steps - scaling_frozen_steps
 
     return linear_decay(step,
                         scaling_rate_scaling,
