@@ -1,20 +1,21 @@
 
-from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
+
 from tic_tac_learn.control.learning_rate_decay.decay_rate_calulator import e_decay,linear_decay,constant_learning_rate
 from typing import Optional
 
+#TODO  Shoudl improve from the lazy importing
 
 def _constant_decay_from_config(step : int,
-                                conf : Optional[Config_2_MC] = None) -> float :
-
+                                conf : Optional['Config_2_MC'] = None) -> float :
+    from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
     conf = conf or Config_2_MC
     params = (conf.learning_rate_dict or {}).get("params", {}) or {}
     
     return constant_learning_rate(params.get("learning_rate_inital",1))
 
 def _e_decay_from_config(step: int, 
-                         conf : Optional[Config_2_MC] = None) -> float :
-    
+                         conf : Optional['Config_2_MC'] = None) -> float :
+    from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
     conf = conf or Config_2_MC()
     params  = (conf.learning_rate_dict or {}).get("params", {}) or {}
     decay_rate = params.get("decay_rate",params.get("rate",0.0))
@@ -24,8 +25,8 @@ def _e_decay_from_config(step: int,
 
 
 def _linear_decay_from_config( step : int , 
-                              conf: Optional[Config_2_MC] = None ) -> float: 
-
+                              conf: Optional['Config_2_MC'] = None ) -> float: 
+    from tic_tac_learn.control.config_class_v2_MC import Config_2_MC
     conf = conf or Config_2_MC() 
     params = (conf.learning_rate_dict or {}).get("params", {}) or {}
     learning_rate_inital = params.get("learning_rate_inital",1)

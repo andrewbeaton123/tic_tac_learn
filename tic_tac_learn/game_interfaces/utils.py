@@ -3,7 +3,7 @@ import logging
 
 from datetime import datetime
 from ..config_management  import ConfigManager
-cm = ConfigManager()
+
 
 class InterFaceError(Exception):
     """ Base exception for all game errors"""

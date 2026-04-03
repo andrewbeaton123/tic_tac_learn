@@ -37,14 +37,16 @@ def main():
     """Main execution function."""
     # 1. Load Configuration from file
     logging.info("Loading configuration from config.yml...")
-    config_data = load_config('tic_tac_learn/config.yml')
+
+    config_path ='tic_tac_learn/config.yml'
+    config_data = load_config(config_path)
+
     mc_settings = config_data.get('monte_carlo_settings', {})
     
     mlflow.set_experiment(experiment_name=mc_settings["experiment_name"])
     with mlflow.start_run(run_name=mc_settings["run_name"]) as run:
         # 2. Populate the singleton Config object
         #TODO Migrate this into a more generalized form. 
-
         conf = Config_2_MC()
         conf.config = mc_settings
         conf.load_from_dict(mc_settings)
@@ -59,7 +61,7 @@ def main():
     
         logging.info(f"MLflow run started (ID: {run.info.run_id})")
         mlflow.log_params(mc_settings) # Log all the settings
-        
+
         # This is the main call to our new orchestration function
         run_parallel_training(conf)
         

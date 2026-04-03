@@ -14,25 +14,27 @@ class ConfigManager:
     _instance = None 
     _config = None 
 
-    def __new__ (cls, config_path : str = "config.yml"):
+    def __new__ (cls,):
         """Singleton pattern to enforce only one current config """
 
         if cls._instance is None : 
             cls._instance = super(ConfigManager, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
-
+    
     def __init__(self, config_path: str = "config.yml"):
         if self._initialized: 
             return 
 
         self.config_path = Path(config_path)
+        
         self._config = self._load_config()
         self._available_games = list(self._config.get("app", {}).get("games", {}).keys())
         self._initialized = True 
 
     def _load_config(self) -> Dict:
         "load the config from the yml"
+        
         try: 
             if not self.config_path.exists():
                 logging.warning(f"Config file {self.config_path} not found. Using default config")

@@ -2,8 +2,8 @@ import logging
 import mlflow
 from typing import Optional, Dict, Any
 
-from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
-from tic_tac_learn.control.learning_rate_decay.decay_rate_types import DecayType
+#from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
+from tic_tac_learn.control.learning_rate_decay.decay_rate_types import DecayType, apply_decay
 from collections import namedtuple
 from .config_base_class import ConfigBaseClass
 # Define the named tuple
@@ -63,7 +63,7 @@ class Config_2_MC(ConfigBaseClass):
             cls._instance._discount_factor = 0.9
             cls._instance._exploration_rate = 0.1
 
-
+            cls._config_path :Optional[str| None] ="tic_tac_learn/config.yml"
             cls._instance.frozen_learning_rate_steps = None 
             cls._instance._games_per_step = None
             
@@ -73,10 +73,11 @@ class Config_2_MC(ConfigBaseClass):
             cls._instance.learning_rate_dict = None
             cls._learning_rate_type = None 
             cls._decay_steps = None
+            cls._decay_rate = None
 
             cls._instance._training_player = None
 
-        
+            cls._config = None
         return cls._instance
     
     def get_allowed_players(self) -> tuple[int, int]:
@@ -90,7 +91,7 @@ class Config_2_MC(ConfigBaseClass):
         logging.info("Starting Monte Carlo Pre run calculations.")
         self.learning_rate_dict =  self.resolve_decay_method("monte_carlo")
 
-        
+        logging.debug(f"learning_rate_dict: {self.learning_rate_dict}")
         # Ensure steps is not zero to prevent division by zero
         if self.steps == 0:
             logging.error("Config Error: 'steps' cannot be zero. Setting to 1.")
@@ -107,21 +108,17 @@ class Config_2_MC(ConfigBaseClass):
         else:
             self.learning_rate_dict.get("learning_rate_frozen_steps") or 0 
 
-            
-        logging.debug(f"MC config frozen steps :{self.learning_rate_flat_games}")
-
-        # Calculate learning rate decay rate
+        self.frozen_learning_rate_steps = self.learning_rate_dict.get("params",{}).get("learning_rate_frozen_steps", 0)
+        
+        self.decay_steps = (self.steps - self.frozen_learning_rate_steps)
         
 
-        self.decay_steps = (self.steps - self.learning_rate_dict.get("learning_rate_frozen_steps", 0))
-        self.frozen_learning_rate_steps = self.learning_rate_dict.get("learning_rate_frozen_steps", 0)
-        
-
-        self.learning_rate_min = self.learning_rate_dict.get("params",{}).get("min_value", 0)
-        self.learning_rate_start = self.learning_rate_dict.get("params",{}).get("initial", 0)
+        self.learning_rate_min = self.learning_rate_dict.get("params",{}).get("learning_rate_min", 0)
+        self.learning_rate_start = self.learning_rate_dict.get("params",{}).get("learning_rate_inital", 0)
         
         self.learning_rate_type = self.learning_rate_dict.get("type").name
 
+        self.decay_rate  = (self.learning_rate_start -self.learning_rate_min ) /self.decay_steps 
         
         logging.info("Monte Carlo Pre run calculations finished.")
         logging.debug(f"frozen_learning_rate_steps = {self.frozen_learning_rate_steps}")
@@ -129,7 +126,7 @@ class Config_2_MC(ConfigBaseClass):
         logging.debug(f"learning_rate_dict = {self.learning_rate_dict}")
     
 
-    def parse_decay_type(self, value : Optional[str]) -> DecayType : 
+    def parse_decay_type(self, value : Optional[str]) -> str : 
 
         """
         Checks that the value of the decay rate method 
@@ -144,9 +141,13 @@ class Config_2_MC(ConfigBaseClass):
             raise ValueError( "No decay type provided in config")
         
         v= value.strip().lower()
+        logging.info(v)
+        logging.info(type(DecayType))
+        logging.info([(e.name, e.value) for e in DecayType])
         for memeber in DecayType: 
+            logging.info(memeber)
             if memeber.value == v or memeber.name.lower() == v: 
-                return memeber
+                return apply_decay(memeber)
         raise ValueError(f"Unknown decay type: {value}")
 
     def resolve_decay_method(self,
@@ -156,12 +157,12 @@ class Config_2_MC(ConfigBaseClass):
         # training method. 
         # TODO - Generalize this function to handle any variable
 
-        global_decay = self.config_dict.get("decay") or {}
+        global_decay = self.config.get("decay") or {}
         algo_decay = {}
 
         if algorithm : # This will always trigger due to default value
             algo_key = f"{algorithm}_settings"
-            algo_section = self.config_dict.get( algo_key, {}) or {}
+            algo_section = self.config.get( algo_key, {}) or {}
             algo_decay = algo_section.get("decay", {}) or {}
 
         merged_raw = {**global_decay, ** algo_decay}
@@ -190,8 +191,7 @@ class Config_2_MC(ConfigBaseClass):
             "training": {
                 "total_games": self.total_games,
                 "steps": self.steps,
-                "cores": self.cores,
-                "learning_rate_flat_games": self.learning_rate_flat_games
+                "cores": self.cores
             },
             "learning_rates": {
 
@@ -224,7 +224,24 @@ class Config_2_MC(ConfigBaseClass):
             mlflow.log_param("calculated.games_per_step", self._games_per_step)
     
     
+    @property
+    def decay_rate(self) ->  float | None:
+        return self._decay_rate
+    
+    @decay_rate.setter
+    def decay_rate(self,
+                        decay_rate : float):
+        self._decay_rate = decay_rate
 
+
+    @property
+    def config(self) ->  Dict | None:
+        return self._config
+    
+    @config.setter
+    def config(self,
+                        config : Dict):
+        self._config = config
 
     @property
     def learning_rate_type(self) -> str | None:
@@ -278,6 +295,17 @@ class Config_2_MC(ConfigBaseClass):
         self._custom_model_name = value
 
         
+
+    @property
+    def config_path(self) :
+        return self._config_path
+    
+    @config_path.setter
+    def agent_reload(self, config_path): 
+        self._config_path = config_path
+
+
+
 
     @property
     def agent_reload(self) :
