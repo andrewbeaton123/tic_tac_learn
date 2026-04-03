@@ -25,18 +25,17 @@ def constant_learning_rate(
     return starting_learning_rate
 
 
-def linear_decay(step: int, 
-                learning_rate_scaling : float,
-                learning_rate_start : float,
-                learning_rate_min : float,
-                decay_steps : int
-                 ) -> float: 
+def linear_decay(decay_step: int, 
+                learning_rate_scaling: float,
+                learning_rate_start: float,
+                learning_rate_min: float,
+                total_decay_steps: int) -> float: 
     
-    if decay_steps <= 0: # Prevent division by zero or negative steps for decay
+    if total_decay_steps <= 0:
         logging.warning("Config Warning: Decay steps are zero or negative. Learning rate will not decay.")
-
-        return  0.0
+        return learning_rate_start
     else:
-        return  step* round(learning_rate_scaling *
-                        (learning_rate_start - learning_rate_min
-                        ) / decay_steps, 4)
+        decay_per_step = (learning_rate_start - learning_rate_min) / total_decay_steps
+        decay_per_step *= learning_rate_scaling
+        new_lr = learning_rate_start - (decay_step * decay_per_step)
+        return round(max(new_lr, learning_rate_min), 4)

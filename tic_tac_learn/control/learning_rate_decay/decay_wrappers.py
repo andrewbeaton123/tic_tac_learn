@@ -20,14 +20,20 @@ def _linear_decay_from_config(step: int, conf=None) -> float:
     learning_rate_inital = params.get("learning_rate_inital", 1.0)
     scaling_rate_scaling = params.get("learning_rate_scaling", 1.0)
     learning_rate_min = params.get("learning_rate_min", 0.0)
-    scaling_frozen_steps = params.get("scaling_frozen_steps", 0)
     
-    # Use conf.steps instead of params.steps to avoid AttributeError on dict
+    # Match the config YAML key for frozen steps
+    frozen_steps = params.get("learning_rate_frozen_steps", params.get("scaling_frozen_steps", 0))
+    
     total_steps = getattr(conf, 'steps', 10)
-    decay_steps = total_steps - scaling_frozen_steps
+    total_decay_steps = total_steps - frozen_steps
 
-    return linear_decay(step,
+    # Calculate how far along we are in the decay phase (1-indexed for the formula to drop rate each step)
+    decay_step = step - frozen_steps + 1
+    if decay_step < 0:
+        decay_step = 0
+
+    return linear_decay(decay_step,
                         scaling_rate_scaling,
                         learning_rate_inital,
                         learning_rate_min,
-                        decay_steps)
+                        total_decay_steps)
