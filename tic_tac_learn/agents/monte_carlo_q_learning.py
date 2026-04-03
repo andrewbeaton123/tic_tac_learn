@@ -198,9 +198,7 @@ def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> 
 
         # Calculate averages and collect statistics
         for state, actions in merged_q_table.items():
-            merge_stats['total_states'] += 1
             for action, total_q_value in actions.items():
-                merge_stats['total_actions'] += 1
                 count = state_action_counts[state][action]
                 if count > 0:  # Protect against division by zero
                     avg_q_value = total_q_value / count
@@ -211,6 +209,10 @@ def merge_q_tables(q_tables: list[defaultdict], merge_strategy: str = 'max') -> 
     
     else: 
         raise ValueError(f"Incorrect merge strategy supplie: {merge_strategy}")
+
+    # Calculate final state and action counts for stats
+    merge_stats['total_states'] = len(merged_q_table)
+    merge_stats['total_actions'] = sum(len(actions) for actions in merged_q_table.values())
 
     # Log merge statistics
     logging.info(f"Q-table merge completed: {merge_stats}")
