@@ -3,21 +3,24 @@
 import math as maths 
 import logging
 
-def e_decay(step : int,
+def e_decay(decay_step: int,
             starting_learning_rate: float,
-            decay_rate: float) ->float: 
+            decay_rate: float) -> float: 
     """
     Docstring for e_decay
     
-    :param step: Description
-    :type step: int
+    :param decay_step: The number of steps since decay started
+    :type decay_step: int
     :param starting_learning_rate: Description
     :type starting_learning_rate: float
     :param decay_rate: Description
     :type decay_rate: float
     """
-    
-    return float(starting_learning_rate * maths.e**(step*decay_rate))
+    # Ensure decay_rate actually causes a decay (negative exponent)
+    if decay_rate > 0:
+        decay_rate = -decay_rate
+        
+    return float(starting_learning_rate * maths.e**(decay_step * decay_rate))
 
 def constant_learning_rate( 
                             starting_learning_rate : float ) -> float : 

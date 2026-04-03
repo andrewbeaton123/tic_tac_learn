@@ -13,7 +13,16 @@ def _e_decay_from_config(step: int, conf=None) -> float:
     params = (conf.learning_rate_dict or {}).get("params", {}) or {}
     decay_rate = params.get("decay_rate", params.get("rate", 0.0))
     learning_rate_inital = params.get("learning_rate_inital", 1.0)
-    return e_decay(step, learning_rate_inital, decay_rate)
+    
+    # Match the config YAML key for frozen steps
+    frozen_steps = params.get("learning_rate_frozen_steps", params.get("scaling_frozen_steps", 0))
+    
+    # Calculate relative step
+    decay_step = step - frozen_steps + 1
+    if decay_step < 0:
+        decay_step = 0
+        
+    return e_decay(decay_step, learning_rate_inital, decay_rate)
 
 def _linear_decay_from_config(step: int, conf=None) -> float:
     params = (conf.learning_rate_dict or {}).get("params", {}) or {}
