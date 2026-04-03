@@ -12,7 +12,8 @@ import time
 import os
 from collections import defaultdict
 
-from tic_tac_learn.control import Config_2_MC
+from tic_tac_learn.control.factory import load_config
+from tic_tac_learn.control.schemas import MonteCarloConfig
 from tic_tac_learn.execution.multi_process_controller import multi_process_controller
 from tic_tac_learn.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
@@ -38,23 +39,25 @@ def training_worker(config: dict) -> defaultdict:
     player_id = config.get("player_id", 1)
     current_q_table = config.get("current_q_table", defaultdict(_create_nested_q_table))
     current_learning_rate = config.get("learning_rate", 0.1)
-
-    conf = Config_2_MC() # The config is a singleton, so this retrieves the instance
-
     
+    # 2. Extract hyperparameters from config dict (no longer a singleton call)
+    discount_factor = config.get("discount_factor", 0.9)
+    exploration_rate = config.get("exploration_rate", 0.1)
+    allowed_players = config.get("allowed_players", [1, 2])
+
     # Each process needs its own game interface instance
     game_interface = TicTacToeGameInterface(
         current_player=player_id,
-        allowed_players=conf.get_allowed_players()
+        allowed_players=allowed_players
     )
 
-    # 2. Create the agent, using parameters from the shared config instance
+    # 3. Create the agent, using parameters from the injected config
     agent = MontecarloQlearningAgent(
         game_interface=game_interface,
         player_id=player_id,
         learning_rate=current_learning_rate,
-        discount_factor=conf.discount_factor,
-        exploration_rate=conf.exploration_rate,
+        discount_factor=discount_factor,
+        exploration_rate=exploration_rate,
         initial_q_table=current_q_table
     )
 
@@ -67,21 +70,10 @@ def training_worker(config: dict) -> defaultdict:
 def test_agent(q_table: defaultdict, 
                num_test_games: int, 
                player_id: int, 
-               config_manager: Config_2_MC) -> dict:
+               conf: MonteCarloConfig) -> dict:
     """
     Tests the performance of the agent with the given Q-table.
-    The agent plays against a random opponent.
-
-    Args:
-        q_table (defaultdict): The Q-table to test.
-        num_test_games (int): The number of games to play for testing.
-        player_id (int): The ID of the player whose performance is being tested.
-        config_manager (Config_2_MC): The configuration manager.
-
-    Returns:
-        dict: A dictionary containing win, loss, and draw counts.
     """
-    conf = Config_2_MC()
     wins = 0
     losses = 0
     draws = 0
@@ -90,13 +82,13 @@ def test_agent(q_table: defaultdict,
     random.seed(42) 
 
     test_game_interface = TicTacToeGameInterface(current_player=player_id,
-                                                allowed_players=conf.get_allowed_players())
+                                                allowed_players=conf.env.allowed_players)
     
     test_agent_instance = MontecarloQlearningAgent(
         game_interface=test_game_interface,
         player_id=player_id,
         learning_rate=0.0, # Not used in testing
-        discount_factor=config_manager.discount_factor, 
+        discount_factor=conf.agent.discount_factor, 
         exploration_rate=0.0 # No exploration during testing
     )
     test_agent_instance.q_table = q_table # Assign the provided Q-table for testing
@@ -155,7 +147,7 @@ def test_agent(q_table: defaultdict,
             
     return {"wins": wins, "losses": losses, "draws": draws}
 
-def run_parallel_training(conf: Config_2_MC):
+def run_parallel_training(conf: MonteCarloConfig):
     """
     Sets up and executes the multi-process training run with step-by-step testing.
     """
@@ -178,8 +170,11 @@ def run_parallel_training(conf: Config_2_MC):
             training_configs.append({
                 "player_id": conf.training_player, 
                 "num_episodes": games_per_step_per_core,
-                "current_q_table": master_q_table, # Pass the current master Q-table
-                "learning_rate": current_learning_rate
+                "current_q_table": master_q_table, 
+                "learning_rate": current_learning_rate,
+                "discount_factor": conf.discount_factor,
+                "exploration_rate": conf.exploration_rate,
+                "allowed_players": conf.env.allowed_players
             })
 
         # Execute Parallel Training for this step
@@ -225,7 +220,7 @@ def run_parallel_training(conf: Config_2_MC):
         test_results = test_agent(master_q_table, 
                                   num_test_games,
                                    player_id=1, 
-                                   config_manager=conf)
+                                   conf=conf)
 
         win_percentage = (test_results["wins"] / num_test_games) * 100
         loss_percentage = (test_results["losses"] / num_test_games) * 100
@@ -263,7 +258,7 @@ def run_parallel_training(conf: Config_2_MC):
             logging.debug(f"Decay Rate Type at step change is {conf.learning_rate_type}")
             # Decay phase
             current_learning_rate = max(conf.learning_rate_min,
-                                        decay_from_name(conf.learning_rate_type, step) )
+                                        decay_from_name(conf.learning_rate_type, step, conf) )
             logging.info(f"Updated learning rate to {current_learning_rate:.4f} for next step.")
     
             

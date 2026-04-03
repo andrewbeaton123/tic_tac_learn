@@ -21,7 +21,7 @@ import mlflow
 import yaml
 
 #local imports
-from tic_tac_learn.control import Config_2_MC
+from tic_tac_learn.control.factory import load_config as load_mc_config
 from tic_tac_learn.monte_carlo_learning.flow_control.run_monte_carlo import run_parallel_training
 
 # confiig basics 
@@ -39,30 +39,17 @@ def main():
     logging.info("Loading configuration from config.yml...")
 
     config_path ='tic_tac_learn/config.yml'
-    config_data = load_config(config_path)
+    conf = load_mc_config(config_path)
 
-    mc_settings = config_data.get('monte_carlo_settings', {})
-    
-    mlflow.set_experiment(experiment_name=mc_settings["experiment_name"])
-    with mlflow.start_run(run_name=mc_settings["run_name"]) as run:
-        # 2. Populate the singleton Config object
-        #TODO Migrate this into a more generalized form. 
-        conf = Config_2_MC()
-        conf.config = mc_settings
-        conf.load_from_dict(mc_settings)
-        conf.pre_run_calculations() # Ensure calculated properties are set
-        conf.log_to_mlflow()
-        logging.info(f"Configuration loaded for run: {conf.run_name}")
-
+    mlflow.set_experiment(experiment_name=conf.runner.experiment_name)
+    with mlflow.start_run(run_name=conf.runner.run_name) as run:
+        logging.info(f"Configuration loaded for run: {conf.runner.run_name}")
+        logging.info(f"MLflow run started (ID: {run.info.run_id})")
         
-
+        # Log all settings
+        mlflow.log_params(conf.raw_config.get("monte_carlo_settings", {}))
 
         # 4. Execute Training
-    
-        logging.info(f"MLflow run started (ID: {run.info.run_id})")
-        mlflow.log_params(mc_settings) # Log all the settings
-
-        # This is the main call to our new orchestration function
         run_parallel_training(conf)
         
         logging.info("Training run finished successfully.")
