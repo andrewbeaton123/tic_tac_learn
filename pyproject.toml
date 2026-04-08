@@ -1,19 +1,24 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "tic_tac_learn"
 version = "0.1.2"
-dependencies = ["numpy",
-"mlflow",
-"tic_tac_toe_game @ git+https://github.com/andrewbeaton123/tic_tac_toe_game.git@223ac92c87e360b06ba3dca543a3f25202237c28",
-"tqdm",
-"recordclass"]
-
 description = "Learning agent for tick tac toe game : https://github.com/andrewbeaton123/tic_tac_toe_game "
-authors = [{name = "Andrew Beaton"}]
+authors = ["Andrew Beaton"]
+packages = [
+    { include = "tic_tac_learn", from = "." }
+]
 
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "*"
+mlflow = "*"
+tqdm = "*"
+recordclass = "*"
+tic-tac-toe-game = { git = "https://github.com/andrewbeaton123/tic_tac_toe_game.git" ,rev = "5b47f13a5d2c796b57eb78c64af10212a043395a" }
 
-[project.optional-dependencies]
-test = ["pytest", "pytest-cov"]
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-cov = "*"

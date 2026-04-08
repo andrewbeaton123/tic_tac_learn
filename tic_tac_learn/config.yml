@@ -1,0 +1,67 @@
+
+# Application settings
+app:
+  current_game: "tic_tac_toe"  # Set the default/current game
+  environment: "development"    # development, testing, production
+  
+# Game definitions
+games:
+  tic_tac_toe:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Tic Tac Toe"
+  
+  chess:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Chess"
+  
+  poker:
+    allowed_players: [1, 2, 3, 4, 5, 6]
+    min_players: 2
+    max_players: 6
+    display_name: "Poker"
+  
+  battleship:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Battleship"
+  
+  connect_four:
+    allowed_players: [1, 2]
+    min_players: 2
+    max_players: 2
+    display_name: "Connect Four"
+
+
+# Settings for the Monte Carlo run
+monte_carlo_settings:
+  run_name: "Refactor testing from_config - Game change -engine-improvements PR1"
+  total_games: 10000
+  experiment_name: "Tic Tac Dev"
+  steps: 10
+  cores: 12
+  decay: 
+    type: LINEAR
+    params: 
+      learning_rate_frozen_steps: 5
+      learning_rate_scaling: 1 
+      learning_rate_inital: 0.7
+      learning_rate_min: 0.01
+
+  #learning_rate_start: 0.8
+  #learning_rate_scaling: 2.0
+  test_games_per_step: 3000
+  custom_model_name: "Final Model as artifact"
+  discount_factor: 0.9 # Discount factor (gamma) for future rewards
+  exploration_rate: 0.4 # Exploration rate (epsilon) for epsilon-greedy policy
+  training_player: 1
+# Default settings (fallback)
+default:
+  allowed_players: [1, 2]
+  min_players: 2
+  max_players: 2
+  display_name: "Generic Game"

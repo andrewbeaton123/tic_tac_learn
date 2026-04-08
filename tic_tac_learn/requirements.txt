@@ -5,3 +5,5 @@ recordclass==0.22.1
 git+https://github.com/andrewbeaton123/tic_tac_toe_game.git
 #torch==2.7.1
 tqdm==4.67.1
+PyYAML==6.0.1
+pytest
