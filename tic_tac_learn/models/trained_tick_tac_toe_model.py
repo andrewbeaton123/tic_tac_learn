@@ -1,10 +1,29 @@
 
+import numpy as np
+
+from typing import Dict
 from .trained_model_abc import TrainedModelABC
 from tic_tac_toe_game import TicTacToe
-import numpy as np
 
 class TicTacToeModel(TrainedModelABC):
 
+
+    def __init__(self,
+                 q_values: Dict, 
+                 metadata: Dict, 
+                 hyperparameters: Dict, 
+                 training_config: Dict,
+                 meta_data: Dict):
+         
+        super().__init__(
+             model_data= q_values, 
+             meta_data=metadata, 
+             game_interface_type="tic_tac_toe", 
+             hyperparameters=hyperparameters, 
+             training_config=training_config, 
+             meta_data = meta_data
+        )
+         
     def predict(self, 
                 game_state, 
                 current_player : int) -> int :
@@ -35,3 +54,4 @@ class TicTacToeModel(TrainedModelABC):
             return best_action
         else:
             raise ValueError(f"Untrained game state encountered : {state_key}")
+    
