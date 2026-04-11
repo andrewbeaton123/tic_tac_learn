@@ -2,12 +2,13 @@
 import numpy as np
 import os 
 import logging
-
+import ast
+    
 from typing import Dict
 from .trained_model_abc import TrainedModelABC
 from tic_tac_toe_game import TicTacToe
 from pathlib import Path
-from safetensors.numpy  import save_file
+from safetensors.numpy  import save_file, load_file
 
 class TicTacToeModel(TrainedModelABC):
 
@@ -89,3 +90,36 @@ class TicTacToeModel(TrainedModelABC):
             "model_version": self.get_metadata().get("model_version","Model Versiion Not Specified")
         }
     )
+        
+    
+    def load(self, load_folder_path: Path | None):
+        """Load Q-values from safetensors file.
+        
+        Args:
+            load_folder_path: Path to folder containing Q_values.safetensors, or None for current directory.
+        """
+
+        filepath = os.path.join(load_folder_path or ".", "Q_values.safetensors")
+        
+        try:
+            tensors = load_file(filepath)
+            
+            # Convert string keys back to tuples
+            self.q_values = {ast.literal_eval(k): v for k, v in tensors.items()}
+            
+            num_states = len(self.q_values)
+            
+            logging.info(
+                f"Loaded Q-values model",
+                extra={
+                    "filepath": filepath,
+                    "num_states": num_states,
+                    "model_version": self.get_metadata().get("model_version", "Model Version Not Specified")
+                }
+            )
+        except FileNotFoundError:
+            logging.error(f"Q-values file not found at {filepath}")
+            raise
+        except Exception as e:
+            logging.error(f"Error loading Q-values from {filepath}: {e}")
+            raise
