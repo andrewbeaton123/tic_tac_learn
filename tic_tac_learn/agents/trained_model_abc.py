@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import Any, Dict
-
+from mlflow.models  import ModelSignature
 def TrainedModelABC(ABC):
 
     def __init__(self,
@@ -35,7 +35,30 @@ def TrainedModelABC(ABC):
 
     def to_dict() -> Dict : 
         pass
-
+    
     @classmethod
     def from_dict() -> TrainedModelABC:
         pass 
+
+    def get_model_signature() -> ModelSignature:
+        pass
+
+    def get_input_example() -> Any: 
+        pass 
+
+    def get_model_flavor() -> str:
+        # returns the way that the model should be treated
+        return "pyfunc" 
+
+    def get_artifact_path() -> str: 
+        pass
+    
+    def get_model_uri() -> str: 
+        pass
+
+    def get_hyperparameters () -> Dict: 
+        pass
+
+    def get_training_config() -> Dict : 
+        pass 
+    
