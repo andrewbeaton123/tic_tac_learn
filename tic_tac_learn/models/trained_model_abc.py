@@ -3,7 +3,7 @@ from typing import Any, Dict
 from mlflow.models  import ModelSignature
 from importlib.metadata import version
 
-def TrainedModelABC(ABC):
+class TrainedModelABC(ABC):
 
     def __init__(self,
                  model_data : Any,
