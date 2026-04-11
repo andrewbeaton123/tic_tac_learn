@@ -1,9 +1,13 @@
 
 import numpy as np
+import os 
+import logging
 
 from typing import Dict
 from .trained_model_abc import TrainedModelABC
 from tic_tac_toe_game import TicTacToe
+from pathlib import Path
+from safetensors.numpy  import save_file
 
 class TicTacToeModel(TrainedModelABC):
 
@@ -23,7 +27,16 @@ class TicTacToeModel(TrainedModelABC):
              training_config=training_config, 
              meta_data = meta_data
         )
-         
+    # meta data example placeholder 
+    # "training_date": "2025-04-11",
+    # "games_trained": 100000,
+    # "win_rate_vs_random": 0.98,
+    # "author": "andrew",
+    # "model_version": "2.0",
+    # "opponent_type": "random",
+    # "tags": ["production", "high-win-rate"],
+    # "experiment_id": "exp_123"
+
     def predict(self, 
                 game_state, 
                 current_player : int) -> int :
@@ -55,3 +68,24 @@ class TicTacToeModel(TrainedModelABC):
         else:
             raise ValueError(f"Untrained game state encountered : {state_key}")
     
+
+    def save(self,
+            save_folder_path : Path|None ):
+        
+        tensors = {str(k): np.array(v) for k ,v in self.q_values.items()}
+        file_size = sum(t.nbytes for t in tensors.values())
+
+        if save_folder_path:
+            save_file(tensors , os.path.join(save_folder_path, "Q_values.safetensors"))
+        else:
+            save_file(tensors, "Q_values.safetensors")
+        
+        logging.info(
+        f"Saving Q-values model",
+        extra={
+            "filepath": save_folder_path,
+            "num_states": len(tensors),
+            "file_size_mb": file_size / (1024**2),
+            "model_version": self.get_metadata().get("model_version","Model Versiion Not Specified")
+        }
+    )

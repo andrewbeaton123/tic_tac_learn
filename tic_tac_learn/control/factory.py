@@ -1,7 +1,32 @@
 import yaml
 import logging
 from typing import Dict, Any
+from pathlib import Path
 from .schemas import MonteCarloConfig, EnvConfig, AgentConfig, RunnerConfig
+
+
+
+def _validate_and_create_directories(config: Dict) -> None:
+    """Create required directories from config upfront.
+    
+    Extracts directory paths from app.paths config and creates them.
+    Fails fast during initialization rather than during training.
+    """
+    app_settings = config.get("app",{}).get("paths", {})
+    required_dirs = [
+        app_settings.get("q_tables_dir", "q_tables"),
+        app_settings.get("logs_dir", "logs"),
+        app_settings.get("models_dir", "models")
+    ]
+    
+    for dir_path in required_dirs:
+        try:
+            Path(dir_path).mkdir(parents=True, exist_ok=True)
+            logging.info(f"Created/Validated directory: {dir_path}")
+        except Exception as e:
+            logging.error (f"Failed to create directory {dir_path}:{e}")
+            raise
+
 
 def load_config(config_path: str = "tic_tac_learn/config.yml") -> MonteCarloConfig:
     with open(config_path, "r") as f:
@@ -16,6 +41,8 @@ def load_config(config_path: str = "tic_tac_learn/config.yml") -> MonteCarloConf
     
     # Monte Carlo specific settings
     mc_settings = raw.get("monte_carlo_settings", {})
+    
+    _validate_and_create_directories(raw)
     
     # Handle Decay Merging (Logic moved from Singleton to Factory)
     decay_config = mc_settings.get("decay", {})

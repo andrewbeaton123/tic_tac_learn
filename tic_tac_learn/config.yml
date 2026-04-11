@@ -1,8 +1,12 @@
 
-# Application settings
 app:
-  current_game: "tic_tac_toe"  # Set the default/current game
-  environment: "development"    # development, testing, production
+  current_game: "tic_tac_toe"
+  environment: "development"
+  paths:
+    q_tables_dir: "q_tables"
+    logs_dir: "logs"
+    models_dir: "models"
+
   
 # Game definitions
 games:
