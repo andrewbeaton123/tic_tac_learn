@@ -15,19 +15,18 @@ class TicTacToeModel(TrainedModelABC):
 
     def __init__(self,
                  q_values: Dict, 
-                 metadata: Dict, 
                  hyperparameters: Dict, 
                  training_config: Dict,
                  meta_data: Dict):
          
         super().__init__(
-             model_data= q_values, 
-             meta_data=metadata, 
+             model_data= q_values,
              game_interface_type="tic_tac_toe", 
              hyperparameters=hyperparameters, 
              training_config=training_config, 
              meta_data = meta_data
         )
+        self.artifact_dir = None
     # meta data example placeholder 
     # "training_date": "2025-04-11",
     # "games_trained": 100000,
@@ -90,6 +89,7 @@ class TicTacToeModel(TrainedModelABC):
             "model_version": self.get_metadata().get("model_version","Model Versiion Not Specified")
         }
     )
+        self.artifact_dir = save_folder_path or Path(".")
         
     
     def load(self, load_folder_path: Path | None):
@@ -117,9 +117,29 @@ class TicTacToeModel(TrainedModelABC):
                     "model_version": self.get_metadata().get("model_version", "Model Version Not Specified")
                 }
             )
+            self.artifact_dir = load_folder_path or Path(".")
         except FileNotFoundError:
             logging.error(f"Q-values file not found at {filepath}")
             raise
         except Exception as e:
             logging.error(f"Error loading Q-values from {filepath}: {e}")
             raise
+
+    def get_artifact_path(self) -> Dict[str, str]:
+        """
+        Returns a dictionary mapping artifact names to their file paths.
+        
+        Used for MLflow compatibility to locate model artifacts for logging.
+        
+        Returns:
+            Dict[str, str]: Dictionary with artifact names as keys and absolute file paths as values.
+            
+        Raises:
+            ValueError: If the model has not been saved or loaded yet.
+        """
+        if self.artifact_dir is None:
+            raise ValueError("Model artifacts not available. Call save() or load() first.")
+        
+        return {
+            "q_values": os.path.join(str(self.artifact_dir), "Q_values.safetensors")
+        }
