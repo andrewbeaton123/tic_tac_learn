@@ -7,13 +7,12 @@ class TrainedModelABC(ABC):
 
     def __init__(self,
                  model_data : Any,
-                 metadata: Dict,
                  game_interface_type: str,
                  hyperparameters : Dict,
                  training_config : Dict,
                  meta_data: Dict ):
         
-        self._metadata = metadata
+        self._meta_data = meta_data
         self._hyperparameters = hyperparameters
         self._training_config = training_config
 
@@ -24,14 +23,14 @@ class TrainedModelABC(ABC):
         pass
     
     @property
-    def get_metadata(self) -> Dict:
-        return self._metadata
+    def meta_data(self) -> Dict:
+        return self._meta_data
     
-    def set_meta_data_field(self,
-                            key:str,
-                            value: Any) -> None:
-        
-        self._metadata[key] = value
+    @meta_data.setter
+    def meta_data(self,value) :
+        if not isinstance(value, dict):
+            raise TypeError("Meta data must be a dict")
+        self._meta_data= value
 
 
     def save(self) -> None :
@@ -72,3 +71,7 @@ class TrainedModelABC(ABC):
         }
         
         return self._training_config | version_config
+
+    def set_meta_data_field(self, key: str, value: Any) -> None:
+        """Set a single metadata field."""
+        self._meta_data[key] = value

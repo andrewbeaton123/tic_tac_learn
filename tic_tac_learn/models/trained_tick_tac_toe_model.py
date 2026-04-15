@@ -9,6 +9,8 @@ from .trained_model_abc import TrainedModelABC
 from tic_tac_toe_game import TicTacToe
 from pathlib import Path
 from safetensors.numpy  import save_file, load_file
+from mlflow.models import ModelSignature
+from mlflow.types.schema import Schema, ColSpec, ParamSchema
 
 class TicTacToeModel(TrainedModelABC):
 
@@ -26,6 +28,7 @@ class TicTacToeModel(TrainedModelABC):
              training_config=training_config, 
              meta_data = meta_data
         )
+        self.q_values = q_values
         self.artifact_dir = None
     # meta data example placeholder 
     # "training_date": "2025-04-11",
@@ -37,9 +40,12 @@ class TicTacToeModel(TrainedModelABC):
     # "tags": ["production", "high-win-rate"],
     # "experiment_id": "exp_123"
 
-    def predict(self, 
-                game_state, 
-                current_player : int) -> int :
+    def predict(self,
+                input: Dict
+                ) -> Dict :
+        
+        game_state = input.get("game_state",[0,0,0,0,0,0,0,0,0])
+        current_player = input.get("current_player", 1)
         current_game = TicTacToe(current_player,
                             np.reshape(game_state, (3, 3)))
         
@@ -64,7 +70,8 @@ class TicTacToeModel(TrainedModelABC):
             actions_q_values = self.q_values[state_key]
             # Find the action with the maximum Q-value
             best_action = max(actions_q_values, key=actions_q_values.get)
-            return best_action
+            return {"action": best_action,
+                    "q_value" : float(actions_q_values[best_action])}
         else:
             raise ValueError(f"Untrained game state encountered : {state_key}")
     
@@ -86,7 +93,7 @@ class TicTacToeModel(TrainedModelABC):
             "filepath": save_folder_path,
             "num_states": len(tensors),
             "file_size_mb": file_size / (1024**2),
-            "model_version": self.get_metadata().get("model_version","Model Versiion Not Specified")
+            "model_version": self.get_metadata.get("model_version","Model Versiion Not Specified")
         }
     )
         self.artifact_dir = save_folder_path or Path(".")
@@ -114,7 +121,7 @@ class TicTacToeModel(TrainedModelABC):
                 extra={
                     "filepath": filepath,
                     "num_states": num_states,
-                    "model_version": self.get_metadata().get("model_version", "Model Version Not Specified")
+                    "model_version": self.get_metadata.get("model_version", "Model Version Not Specified")
                 }
             )
             self.artifact_dir = load_folder_path or Path(".")
@@ -143,3 +150,45 @@ class TicTacToeModel(TrainedModelABC):
         return {
             "q_values": os.path.join(str(self.artifact_dir), "Q_values.safetensors")
         }
+    
+
+    def get_model_signature(self) -> ModelSignature:
+
+        input_schema = Schema([
+            ColSpec("integer", "current_player"),
+            ColSpec("integer", "game_state", shape=(9))
+        ])
+
+        output_schema = Schema(
+            [
+                ColSpec("integer", "action"),
+                ColSpec("float", "q_value")
+            ]
+        )
+
+        return ModelSignature(inputs=input_schema, outputs=output_schema)
+    
+
+    def get_input_example(self) -> Dict:
+        return {
+            "current_player" : 1, 
+            "game_state": [0, 0, 0, 0, 1, 0, 0, 0, 0]
+        }
+    
+
+    def get_model_uri(self) -> str:
+        """
+        Return the MLflow Model Registry address for this model.
+        
+        Format: models:/<model_name>/<version>
+        Example: models:/tictactoe-agent/1
+        
+        This allows:
+        - Version control (v1, v2, v3 of the same model)
+        - Production promotion (dev → staging → prod)
+        - Rollback if new version is bad
+        """
+        model_name = self.meta_data.get("model_name", "tictactoe-agent")
+        model_version = self.meta_data.get("model_version", "1.0")
+        
+        return f"models:/{model_name}/{model_version}"
