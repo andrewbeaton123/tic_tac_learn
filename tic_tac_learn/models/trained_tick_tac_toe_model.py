@@ -12,7 +12,7 @@ from safetensors.numpy  import save_file, load_file
 from mlflow.models import ModelSignature
 from mlflow.types.schema import Schema, ColSpec, ParamSchema
 
-class TicTacToeModel(TrainedModelABC):
+class TicTacToeModelMonteCarlo(TrainedModelABC):
 
 
     def __init__(self,
