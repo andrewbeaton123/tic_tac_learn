@@ -58,6 +58,8 @@ class MonteCarloConfig:
     @property
     def exploration_rate(self) -> float: return self.agent.exploration_rate
     @property
+    def runner_config(self) -> "RunnerConfig": return self.runner
+    @property
     def training_player(self) -> int: return self.env.training_player
     @property
     def test_games_per_step(self) -> int: return self.runner.test_games_per_step

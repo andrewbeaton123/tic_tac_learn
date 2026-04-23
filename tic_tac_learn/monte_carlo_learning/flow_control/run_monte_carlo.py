@@ -69,10 +69,7 @@ def training_worker(config: dict) -> defaultdict:
     logging.info(f"Worker starting training for {num_episodes} episodes with LR {current_learning_rate:.4f}.")
     q_table = agent.train(num_episodes)
     logging.info(f"Worker finished training.")
-
-    TicTacToeModelMonteCarlo(q_table,
-                             hyper_parameters,
-                             )
+    
     return q_table
 
 def test_agent(q_table: defaultdict, 
@@ -282,11 +279,11 @@ def run_parallel_training(conf: MonteCarloConfig):
     meta_data = {"training_date": datetime.now(),
      "games_trained": total_games_played,
      "win_rate_vs_random": win_percentage,
-     "author": os.getlogin(),
+     "author": os.environ.get('LOGNAME') or os.environ.get('USER') or os.environ.get('USERNAME') or "unknown",
      "model_version": "2.0",
      "opponent_type": "random",
-     "tags": ["experiment_name", conf.get("monte_carlo_settings",{}).get("experiment_name","No experiment name set")],
-     "run_name": conf.get("monte_carlo_settings",{}).get("experiment_name","No run name name set")}
+     "tags": ["experiment_name", conf.runner_config.experiment_name],
+     "run_name": conf.runner_config.run_name}
 
 
     trained_model = TicTacToeModelMonteCarlo(master_q_table,
@@ -294,11 +291,12 @@ def run_parallel_training(conf: MonteCarloConfig):
                             training_configs,
                             meta_data=meta_data
                             )           
-    model_name =  conf.get("monte_carlo_settings",{}).get( "experiment_name","No run name name set")
+    model_name =  f"{conf.runner_config.experiment_name}_{conf.runner_config.run_name}"
     
     mlflow.pyfunc.log_model(name = model_name,
                             python_model= trained_model,
                             input_example= [0,0,0,0,0,0,0,0,0])
+    
     
     logging.info("\n--- All Training Steps Completed ---")
 

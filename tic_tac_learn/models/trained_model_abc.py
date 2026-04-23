@@ -43,7 +43,7 @@ class TrainedModelABC(ABC):
         pass
     
     @classmethod
-    def from_dict() -> TrainedModelABC:
+    def from_dict() -> "TrainedModelABC":
         pass 
 
     def get_model_signature(self) -> ModelSignature:
