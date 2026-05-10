@@ -4,7 +4,7 @@ import os
 import logging
 import ast
     
-from typing import Dict
+from typing import Dict, List,Union
 from .trained_model_abc import TrainedModelABC
 from tic_tac_toe_game import TicTacToe
 from pathlib import Path
@@ -40,15 +40,13 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
     # "tags": ["production", "high-win-rate"],
     # "experiment_id": "exp_123"
 
-    def predict(self,
-                input: Dict
-                ) -> Dict :
+    def predict(self, context, 
+                model_input: List[Dict[str,Union[int,List[int]]]]) -> Dict :
         
-        game_state = input.get("game_state",[0,0,0,0,0,0,0,0,0])
-        current_player = input.get("current_player", 1)
+        game_state = model_input[0].get("game_state",[0,0,0,0,0,0,0,0,0])
+        current_player = model_input[0].get("current_player", 1)
         current_game = TicTacToe(current_player,
                             np.reshape(game_state, (3, 3)))
-        
         
 
         return self._get_action(current_game)
@@ -156,7 +154,7 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
 
         input_schema = Schema([
             ColSpec("integer", "current_player"),
-            ColSpec("integer", "game_state", shape=(9))
+            ColSpec("integer", "game_state", shape=(9,))
         ])
 
         output_schema = Schema(
@@ -166,14 +164,15 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
             ]
         )
 
-        return ModelSignature(inputs=input_schema, outputs=output_schema)
+        return ModelSignature(inputs=input_schema, 
+                              outputs=output_schema)
     
 
-    def get_input_example(self) -> Dict:
-        return {
+    def get_input_example(self) -> List[Dict]:
+        return [{
             "current_player" : 1, 
             "game_state": [0, 0, 0, 0, 1, 0, 0, 0, 0]
-        }
+        }]
     
 
     def get_model_uri(self) -> str:

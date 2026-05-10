@@ -43,17 +43,17 @@ games:
 
 # Settings for the Monte Carlo run
 monte_carlo_settings:
-  run_name: "Refactor testing from_config - Game change -engine-improvements PR1"
-  total_games: 100
+  run_name: "Issue 13 - testing mid sized run mlflow saving of custom model class"
+  total_games: 400000
   experiment_name: "Tic Tac Dev"
   steps: 10
-  cores: 12
+  cores: 10
   decay: 
     type: LINEAR
     params: 
-      learning_rate_frozen_steps: 5
+      learning_rate_frozen_steps: 3
       learning_rate_scaling: 1 
-      learning_rate_inital: 0.7
+      learning_rate_inital: 1
       learning_rate_min: 0.01
 
   #learning_rate_start: 0.8

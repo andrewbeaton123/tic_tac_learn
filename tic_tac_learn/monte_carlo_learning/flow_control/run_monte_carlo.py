@@ -250,8 +250,12 @@ def run_parallel_training(conf: MonteCarloConfig):
         try:
             with open(q_table_path_step, "wb") as f:
                 pickle.dump(dict(master_q_table), f)
-            mlflow.log_artifact(q_table_path_step, artifact_path="q_tables")
-            logging.info(f"Logged Q-table for step {step + 1} to MLflow.")
+            try: 
+                mlflow.log_artifact(q_table_path_step, artifact_path="q_tables")
+                logging.info(f"Logged Q-table for step {step + 1} to MLflow.")
+            except Exception as e_mlf:
+                logging.error(f"Failed to save the q tables to mlflow : {step + 1 } -- {e_mlf}") 
+
         except Exception as e:
             logging.error(f"Failed to save or log Q-table artifact for step {step + 1}: {e}")
 
@@ -295,7 +299,9 @@ def run_parallel_training(conf: MonteCarloConfig):
     
     mlflow.pyfunc.log_model(name = model_name,
                             python_model= trained_model,
-                            input_example= [0,0,0,0,0,0,0,0,0])
+                            input_example=[{"current_player" : 1,
+                                "game_state":[0, 0, 0, 0, 0, 0, 0, 0, 0]}]
+                              )
     
     
     logging.info("\n--- All Training Steps Completed ---")

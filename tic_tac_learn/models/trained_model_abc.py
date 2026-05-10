@@ -1,9 +1,12 @@
+
+from mlflow.pyfunc import PythonModel
 from abc import ABC
 from typing import Any, Dict
 from mlflow.models  import ModelSignature
+
 from importlib.metadata import version
 
-class TrainedModelABC(ABC):
+class TrainedModelABC(ABC, PythonModel):
 
     def __init__(self,
                  model_data : Any,
@@ -16,10 +19,16 @@ class TrainedModelABC(ABC):
         self._hyperparameters = hyperparameters
         self._training_config = training_config
 
+    def load_context(self, context):
+        """
+        Load context when model is loaded from MLflow.
+        This is called when the model is loaded, not during logging.
+        """
+        pass
 
 
-    def predict (self,
-                 state:Any):
+
+    def predict (self, context, model_input):
         pass
     
     @property
