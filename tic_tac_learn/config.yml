@@ -44,14 +44,14 @@ games:
 # Settings for the Monte Carlo run
 monte_carlo_settings:
   run_name: "Issue 13 - testing mid sized run mlflow saving of custom model class"
-  total_games: 400000
+  total_games: 1500000
   experiment_name: "Tic Tac Dev"
   steps: 10
   cores: 10
   decay: 
     type: LINEAR
     params: 
-      learning_rate_frozen_steps: 3
+      learning_rate_frozen_steps: 2
       learning_rate_scaling: 1 
       learning_rate_inital: 1
       learning_rate_min: 0.01

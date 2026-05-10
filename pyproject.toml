@@ -12,14 +12,16 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "*"
-numpy = "*"  
-mlflow = "*"
+python = ">3.10"
+setuptools= "*"
+numpy = "2.2.6"  
+mlflow = "3.12.0"
 tqdm = "*"
-recordclass = "*"
-safetensors = "*"
+recordclass = "0.24"
+safetensors = " 0.7.0"
 tic-tac-toe-game = { git = "https://github.com/andrewbeaton123/tic_tac_toe_game.git", rev = "5b47f13a5d2c796b57eb78c64af10212a043395a" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.3"
 pytest-cov = "^7.1.0"
+setuptools= "82.0.1"
