@@ -77,7 +77,8 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
     def save(self,
             save_folder_path : Path|None ):
         
-        tensors = {str(k): np.array(v) for k ,v in self.q_values.items()}
+        # Safetensors requires numeric arrays. Convert dictionary of actions to a 2D float array [[action, q_value], ...]
+        tensors = {str(k): np.array(list(v.items()), dtype=np.float32) for k, v in self.q_values.items()}
         file_size = sum(t.nbytes for t in tensors.values())
 
         if save_folder_path:
@@ -91,7 +92,7 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
             "filepath": save_folder_path,
             "num_states": len(tensors),
             "file_size_mb": file_size / (1024**2),
-            "model_version": self.get_metadata.get("model_version","Model Versiion Not Specified")
+            "model_version": self.meta_data.get("model_version", "Model Version Not Specified")
         }
     )
         self.artifact_dir = save_folder_path or Path(".")
@@ -109,8 +110,11 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
         try:
             tensors = load_file(filepath)
             
-            # Convert string keys back to tuples
-            self.q_values = {ast.literal_eval(k): v for k, v in tensors.items()}
+            # Convert string keys back to tuples and recreate the {action: q_value} dictionaries
+            self.q_values = {
+                ast.literal_eval(k): {int(action): float(q) for action, q in arr}
+                for k, arr in tensors.items()
+            }
             
             num_states = len(self.q_values)
             
@@ -119,7 +123,7 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
                 extra={
                     "filepath": filepath,
                     "num_states": num_states,
-                    "model_version": self.get_metadata.get("model_version", "Model Version Not Specified")
+                    "model_version": self.meta_data.get("model_version", "Model Version Not Specified")
                 }
             )
             self.artifact_dir = load_folder_path or Path(".")
@@ -154,7 +158,7 @@ class TicTacToeModelMonteCarlo(TrainedModelABC):
 
         input_schema = Schema([
             ColSpec("integer", "current_player"),
-            ColSpec("integer", "game_state", shape=(9,))
+            ColSpec("integer", "game_state")
         ])
 
         output_schema = Schema(
