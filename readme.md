@@ -53,21 +53,45 @@ The application uses Python's `multiprocessing` module to achieve parallel train
 
 After all worker processes have finished, the main process collects the list of individual Q-tables. A `merge_q_tables` function then combines them into a single, master Q-table by averaging the Q-values for each state-action pair that was learned by multiple agents.
 
-### 5. Logging
+### 5. Model Wrapping and Logging
 
-The entire run, including parameters and the final merged Q-table (as an artifact), is logged to MLflow for tracking and analysis.
+Once training is complete the master Q-table is wrapped in a `TicTacToeModel` instance from the [`tic_tac_toe_model`](https://github.com/andrewbeaton123/tic_tac_toe_model) package. This is the shared model contract between this training repo and the serving layer.
+
+The model is saved to disk as a `Q_values.safetensors` artifact before being logged to MLflow. The MLflow run records hyperparameters, training configuration, the model signature, and the safetensors artifact so the model can be reloaded from the registry by any downstream service.
+
+```python
+trained_model = TicTacToeModel(master_q_table, hyperparameters, training_config, meta_data)
+trained_model.save(artifact_dir)
+
+mlflow.pyfunc.log_model(
+    artifact_path=model_name,
+    python_model=trained_model,
+    artifacts=trained_model.get_artifact_path(),
+    signature=trained_model.get_model_signature(),
+    input_example=trained_model.get_input_example(),
+)
+```
 
 ## How to Run
 
 1.  **Install Dependencies**: 
     ```bash
-    pip install -r requirements.txt
+    poetry install
     ```
 2.  **Configure the Run**: Edit the `monte_carlo_settings` in `config.yml` to define your training parameters.
 3.  **Run the Training**: 
     ```bash
-    python main.py
+    python -m tic_tac_learn.main
     ```
+
+## Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| [`tic_tac_toe_game`](https://github.com/andrewbeaton123/tic_tac_toe_game) | Game environment used during training and inference |
+| [`tic_tac_toe_model`](https://github.com/andrewbeaton123/tic_tac_toe_model) | Shared model contract — wraps the trained Q-table for MLflow logging and serving |
+| `mlflow` | Experiment tracking and model registry |
+| `safetensors` | On-disk artifact format for Q-value storage |
 
 ## Current Status
 
@@ -76,3 +100,4 @@ This code is a work in progress. Recent significant improvements include:
 - A robust and performant parallel training strategy ("Combine Post-Training").
 - Centralized configuration management using `config.yml`.
 - Refactoring of the core configuration class to be more flexible.
+- Replaced internal `TicTacToeModelMonteCarlo` with the standalone [`tic_tac_toe_model`](https://github.com/andrewbeaton123/tic_tac_toe_model) package, establishing a shared model contract between training and serving.

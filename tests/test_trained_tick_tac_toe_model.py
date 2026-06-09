@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from pathlib import Path
-from tic_tac_learn.models.trained_tick_tac_toe_model import TicTacToeModelMonteCarlo
+from tic_tac_toe_model import TicTacToeModel
 from tic_tac_toe_game import TicTacToe
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def sample_model():
     hyperparameters = {"alpha": 0.1, "gamma": 0.9}
     training_config = {"epochs": 100}
     meta_data = {"model_version": "1.0", "model_name": "test_model"}
-    return TicTacToeModelMonteCarlo(
+    return TicTacToeModel(
         q_values=q_values,
         hyperparameters=hyperparameters,
         training_config=training_config,
@@ -63,7 +63,7 @@ def test_get_input_example(sample_model):
 def test_save_and_load(sample_model, tmp_path):
     sample_model.save(tmp_path)
 
-    new_model = TicTacToeModelMonteCarlo(
+    new_model = TicTacToeModel(
         q_values={},
         hyperparameters={},
         training_config={},
@@ -79,13 +79,13 @@ def test_save_and_load(sample_model, tmp_path):
 def test_get_artifact_path(sample_model, tmp_path):
     with pytest.raises(ValueError, match="Model artifacts not available"):
         sample_model.get_artifact_path()
-        
+
     sample_model.save(tmp_path)
     artifact_path = sample_model.get_artifact_path()
-    assert "q_values" in artifact_path
-    assert artifact_path["q_values"].endswith("Q_values.safetensors")
+    assert "q_values_safetensors" in artifact_path
+    assert artifact_path["q_values_safetensors"].endswith("Q_values.safetensors")
 
 def test_load_file_not_found():
-    model = TicTacToeModelMonteCarlo(q_values={}, hyperparameters={}, training_config={}, meta_data={})
+    model = TicTacToeModel(q_values={}, hyperparameters={}, training_config={}, meta_data={})
     with pytest.raises(FileNotFoundError):
         model.load(Path("/non/existent/path"))

@@ -5,6 +5,7 @@ Orchestrates the parallel training of Monte Carlo agents using the multi_process
 import logging
 import mlflow
 import pickle
+import tempfile
 
 import numpy as np
 import random
@@ -12,6 +13,7 @@ import time
 import os
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 from tic_tac_learn.control.factory import load_config
 from tic_tac_learn.control.schemas import MonteCarloConfig
@@ -19,7 +21,7 @@ from tic_tac_learn.execution.multi_process_controller import multi_process_contr
 from tic_tac_learn.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
 from tic_tac_learn.control.learning_rate_decay.decay_from_name import decay_from_name
-from tic_tac_learn.models.trained_tick_tac_toe_model import TicTacToeModelMonteCarlo
+from tic_tac_toe_model import TicTacToeModel
 
 def add_exploration_noise(q_table: defaultdict, noise_scale=0.1) -> defaultdict:
     """Add random noise to Q-table values to encourage exploration."""
@@ -290,18 +292,23 @@ def run_parallel_training(conf: MonteCarloConfig):
      "run_name": conf.runner_config.run_name}
 
 
-    trained_model = TicTacToeModelMonteCarlo(master_q_table,
+    trained_model = TicTacToeModel(master_q_table,
                             hyper_parameters,
                             training_configs,
                             meta_data=meta_data
-                            )           
-    model_name =  f"{conf.runner_config.experiment_name}_{conf.runner_config.run_name}"
-    
-    mlflow.pyfunc.log_model(name = model_name,
-                            python_model= trained_model,
-                            input_example=[{"current_player" : 1,
-                                "game_state":[0, 0, 0, 0, 0, 0, 0, 0, 0]}]
-                              )
+                            )
+    model_name = f"{conf.runner_config.experiment_name}_{conf.runner_config.run_name}"
+
+    artifact_dir = Path(tempfile.mkdtemp())
+    trained_model.save(artifact_dir)
+
+    mlflow.pyfunc.log_model(
+        artifact_path=model_name,
+        python_model=trained_model,
+        artifacts=trained_model.get_artifact_path(),
+        signature=trained_model.get_model_signature(),
+        input_example=trained_model.get_input_example(),
+    )
     
     
     logging.info("\n--- All Training Steps Completed ---")

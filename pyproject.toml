@@ -19,7 +19,8 @@ mlflow = "3.12.0"
 tqdm = "*"
 recordclass = "0.24"
 safetensors = " 0.7.0"
-tic-tac-toe-game = { git = "https://github.com/andrewbeaton123/tic_tac_toe_game.git", rev = "5b47f13a5d2c796b57eb78c64af10212a043395a" }
+tic-tac-toe-game = { git = "https://github.com/andrewbeaton123/tic_tac_toe_game.git" }
+tic-tac-toe-model = { git = "https://github.com/andrewbeaton123/tic_tac_toe_model.git" }
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.3"
