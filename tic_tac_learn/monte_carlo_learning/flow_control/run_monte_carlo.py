@@ -165,6 +165,28 @@ def _model_save_dir(conf: MonteCarloConfig) -> Path:
     return save_dir
 
 
+def _model_training_config(conf: MonteCarloConfig, games_per_step_per_core: int) -> dict:
+    """
+    Run settings stored on the TicTacToeModel. Deliberately excludes the per-worker Q-tables
+    (current_q_table) - the model never reads training_config, and the Q-values already travel
+    with the model via its safetensors artifact.
+    """
+    return {
+        "total_games": conf.total_games,
+        "steps": conf.steps,
+        "cores": conf.cores,
+        "games_per_step_per_core": games_per_step_per_core,
+        "test_games_per_step": conf.test_games_per_step,
+        "training_player": conf.training_player,
+        "exploration_rate": conf.exploration_rate,
+        "discount_factor": conf.discount_factor,
+        "learning_rate_start": conf.learning_rate_start,
+        "learning_rate": conf.learning_rate_dict,
+        "allowed_players": list(conf.env.allowed_players),
+        "opponent_type": "random",
+    }
+
+
 def run_parallel_training(conf: MonteCarloConfig, tracker: Optional[ExperimentTracker] = None):
     """
     Sets up and executes the multi-process training run with step-by-step testing.
@@ -305,7 +327,7 @@ def run_parallel_training(conf: MonteCarloConfig, tracker: Optional[ExperimentTr
 
     trained_model = TicTacToeModel(master_q_table,
                             hyper_parameters,
-                            training_configs,
+                            _model_training_config(conf, games_per_step_per_core),
                             meta_data=meta_data
                             )
     model_name = f"{conf.runner_config.experiment_name}_{conf.runner_config.run_name}"

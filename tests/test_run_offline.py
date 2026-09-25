@@ -71,6 +71,41 @@ class TestTrackingConfig:
         assert "tracking" not in conf.raw_config["monte_carlo_settings"]
 
 
+class RecordingTracker(NullTracker):
+    """NullTracker that keeps hold of the model passed to log_model."""
+
+    def __init__(self):
+        self.logged_model = None
+
+    def log_model(self, model, name):
+        self.logged_model = model
+
+
+def _contains_q_table(value) -> bool:
+    """A Q-table is a mapping keyed by board-state tuples."""
+    if isinstance(value, dict):
+        return any(isinstance(k, tuple) for k in value) or any(_contains_q_table(v) for v in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_contains_q_table(v) for v in value)
+    return False
+
+
+def test_model_training_config_excludes_q_tables(write_config):
+    conf = load_config(write_config({"tracking": {"log_mlflow": False}}))
+    tracker = RecordingTracker()
+
+    run_parallel_training(conf, tracker)
+
+    model = tracker.logged_model
+    assert model is not None
+    assert isinstance(model.training_config, dict)
+    assert "current_q_table" not in model.training_config
+    assert not _contains_q_table(model.training_config)
+    assert model.training_config["total_games"] == 40
+    assert model.training_config["cores"] == 1
+    assert len(model.q_values) > 0  # the model itself still carries the trained Q-values
+
+
 def test_training_runs_without_mlflow_and_saves_model_locally(write_config, tmp_path):
     conf = load_config(write_config({"tracking": {"log_mlflow": False}}))
 
