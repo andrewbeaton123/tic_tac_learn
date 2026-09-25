@@ -1,7 +1,7 @@
 """
 An agent that performs Monte Carlo Q-learning using the game interface.
 """
-
+from __future__ import annotations
 import random
 from collections import defaultdict
 from tic_tac_learn.game_interfaces.game_interface_abc import GameInterface

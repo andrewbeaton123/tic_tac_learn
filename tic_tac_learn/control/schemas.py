@@ -32,6 +32,8 @@ class RunnerConfig:
     test_games_per_step: int = 1000
     mlflow_tracking_uri: Optional[str] = None
     log_mlflow: bool = True
+    mlflow_on_unavailable: str = "warn"  # "warn" | "fail"
+    mlflow_health_check_timeout: float = 3.0
 
 @dataclass(frozen=True)
 class MonteCarloConfig:
@@ -57,6 +59,8 @@ class MonteCarloConfig:
     def discount_factor(self) -> float: return self.agent.discount_factor
     @property
     def exploration_rate(self) -> float: return self.agent.exploration_rate
+    @property
+    def runner_config(self) -> "RunnerConfig": return self.runner
     @property
     def training_player(self) -> int: return self.env.training_player
     @property

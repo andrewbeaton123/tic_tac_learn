@@ -3,14 +3,17 @@
 Orchestrates the parallel training of Monte Carlo agents using the multi_process_controller.
 """
 import logging
-import mlflow
 import pickle
-from tqdm import tqdm
+import re
+
 import numpy as np
 import random
 import time
 import os
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
 from tic_tac_learn.control.factory import load_config
 from tic_tac_learn.control.schemas import MonteCarloConfig
@@ -18,6 +21,8 @@ from tic_tac_learn.execution.multi_process_controller import multi_process_contr
 from tic_tac_learn.agents.monte_carlo_q_learning import MontecarloQlearningAgent, merge_q_tables, _create_nested_q_table
 from tic_tac_learn.game_interfaces.tic_tac_toe_game_interface import TicTacToeGameInterface
 from tic_tac_learn.control.learning_rate_decay.decay_from_name import decay_from_name
+from tic_tac_learn.tracking import ExperimentTracker, NullTracker
+from tic_tac_toe_model import TicTacToeModel
 
 def add_exploration_noise(q_table: defaultdict, noise_scale=0.1) -> defaultdict:
     """Add random noise to Q-table values to encourage exploration."""
@@ -45,12 +50,14 @@ def training_worker(config: dict) -> defaultdict:
     exploration_rate = config.get("exploration_rate", 0.1)
     allowed_players = config.get("allowed_players", [1, 2])
 
+    
     # Each process needs its own game interface instance
     game_interface = TicTacToeGameInterface(
         current_player=player_id,
         allowed_players=allowed_players
     )
 
+   
     # 3. Create the agent, using parameters from the injected config
     agent = MontecarloQlearningAgent(
         game_interface=game_interface,
@@ -65,6 +72,7 @@ def training_worker(config: dict) -> defaultdict:
     logging.info(f"Worker starting training for {num_episodes} episodes with LR {current_learning_rate:.4f}.")
     q_table = agent.train(num_episodes)
     logging.info(f"Worker finished training.")
+    
     return q_table
 
 def test_agent(q_table: defaultdict, 
@@ -147,10 +155,45 @@ def test_agent(q_table: defaultdict,
             
     return {"wins": wins, "losses": losses, "draws": draws}
 
-def run_parallel_training(conf: MonteCarloConfig):
+def _model_save_dir(conf: MonteCarloConfig) -> Path:
+    """Persistent, per-run folder under app.paths.models_dir for the final model artifact."""
+    models_dir = conf.raw_config.get("app", {}).get("paths", {}).get("models_dir", "models")
+    run_label = f"{conf.runner_config.experiment_name}_{conf.runner_config.run_name}"
+    run_label = re.sub(r"[^A-Za-z0-9._-]+", "_", run_label).strip("_")
+    save_dir = Path(models_dir) / f"{run_label}_{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    return save_dir
+
+
+def _model_training_config(conf: MonteCarloConfig, games_per_step_per_core: int) -> dict:
+    """
+    Run settings stored on the TicTacToeModel. Deliberately excludes the per-worker Q-tables
+    (current_q_table) - the model never reads training_config, and the Q-values already travel
+    with the model via its safetensors artifact.
+    """
+    return {
+        "total_games": conf.total_games,
+        "steps": conf.steps,
+        "cores": conf.cores,
+        "games_per_step_per_core": games_per_step_per_core,
+        "test_games_per_step": conf.test_games_per_step,
+        "training_player": conf.training_player,
+        "exploration_rate": conf.exploration_rate,
+        "discount_factor": conf.discount_factor,
+        "learning_rate_start": conf.learning_rate_start,
+        "learning_rate": conf.learning_rate_dict,
+        "allowed_players": list(conf.env.allowed_players),
+        "opponent_type": "random",
+    }
+
+
+def run_parallel_training(conf: MonteCarloConfig, tracker: Optional[ExperimentTracker] = None):
     """
     Sets up and executes the multi-process training run with step-by-step testing.
+    Metrics, artifacts and the final model are reported through `tracker`; with no tracker
+    (or a NullTracker) the run needs no MLflow server and the model is only saved locally.
     """
+    tracker = tracker or NullTracker()
     master_q_table =add_exploration_noise(defaultdict(_create_nested_q_table))
     total_games_played = 0
 
@@ -195,6 +238,7 @@ def run_parallel_training(conf: MonteCarloConfig):
         logging.info(f"Merging Q-tables from step {step + 1}...")
         master_q_table = merge_q_tables(list_of_q_tables_from_step)
         
+        
         logging.info(f"Master Q-table has {len(master_q_table)} states after step {step + 1}.")
 
         # Performance Metrics for this step
@@ -208,11 +252,12 @@ def run_parallel_training(conf: MonteCarloConfig):
         logging.info(f"Step {step + 1} duration: {step_duration:.2f} seconds")
         logging.info(f"Games per second (step {step + 1}): {games_per_second_step:.2f}")
         
-        #TODO make mlflow optional 
-        mlflow.log_metric("step_duration_seconds", step_duration, step=step)
-        mlflow.log_metric("games_per_second_step", games_per_second_step, step=step)
-        mlflow.log_metric("total_games_played", total_games_played, step=step)
-        mlflow.log_metric("current_learning_rate", current_learning_rate, step=step)
+        tracker.log_metrics({
+            "step_duration_seconds": step_duration,
+            "games_per_second_step": games_per_second_step,
+            "total_games_played": total_games_played,
+            "current_learning_rate": current_learning_rate,
+        }, step=step)
 
         # Agent Testing for this step
         num_test_games = conf.test_games_per_step
@@ -231,10 +276,11 @@ def run_parallel_training(conf: MonteCarloConfig):
         logging.info(f"Step {step + 1} Loss Percentage: {loss_percentage:.2f}%")
         logging.info(f"Step {step + 1} Draw Percentage: {draw_percentage:.2f}%")
 
-        mlflow.log_metric("test_win_percentage", win_percentage, step=step)
-        mlflow.log_metric("test_loss_percentage", loss_percentage, step=step)
-        mlflow.log_metric("test_draw_percentage", draw_percentage, step=step)
-        logging.info(f"Test results for step {step + 1} logged to MLflow.")
+        tracker.log_metrics({
+            "test_win_percentage": win_percentage,
+            "test_loss_percentage": loss_percentage,
+            "test_draw_percentage": draw_percentage,
+        }, step=step)
 
         # Log the Q-table as an artifact for this step
         q_table_artifact_dir = "q_tables"
@@ -244,10 +290,9 @@ def run_parallel_training(conf: MonteCarloConfig):
         try:
             with open(q_table_path_step, "wb") as f:
                 pickle.dump(dict(master_q_table), f)
-            mlflow.log_artifact(q_table_path_step, artifact_path="q_tables")
-            logging.info(f"Logged Q-table for step {step + 1} to MLflow.")
+            tracker.log_artifact(q_table_path_step, artifact_path="q_tables")
         except Exception as e:
-            logging.error(f"Failed to save or log Q-table artifact for step {step + 1}: {e}")
+            logging.error(f"Failed to save Q-table for step {step + 1}: {e}")
 
         # Update learning rate for the next step (simple linear decay example)
         if step < conf.frozen_learning_rate_steps:
@@ -261,9 +306,39 @@ def run_parallel_training(conf: MonteCarloConfig):
                                         decay_from_name(conf.learning_rate_type, step, conf) )
             logging.info(f"Updated learning rate to {current_learning_rate:.4f} for next step.")
     
-            
+    hyper_parameters ={
+        
+        "Training Player" : conf.training_player,
+        "discount_factor" : conf.discount_factor,
+        "learning_rate_type": conf.learning_rate_type,
+        "learning_rate_min": conf.learning_rate_min
+    }
+
+
+    meta_data = {"training_date": datetime.now(),
+     "games_trained": total_games_played,
+     "win_rate_vs_random": win_percentage,
+     "author": os.environ.get('LOGNAME') or os.environ.get('USER') or os.environ.get('USERNAME') or "unknown",
+     "model_version": "2.0",
+     "opponent_type": "random",
+     "tags": ["experiment_name", conf.runner_config.experiment_name],
+     "run_name": conf.runner_config.run_name}
+
+
+    trained_model = TicTacToeModel(master_q_table,
+                            hyper_parameters,
+                            _model_training_config(conf, games_per_step_per_core),
+                            meta_data=meta_data
+                            )
+    model_name = f"{conf.runner_config.experiment_name}_{conf.runner_config.run_name}"
+
+    # Always keep the model on disk, so runs without MLflow don't lose it
+    artifact_dir = _model_save_dir(conf)
+    trained_model.save(artifact_dir)
+    logging.info(f"Final model saved to {artifact_dir}")
+
+    tracker.log_model(trained_model, model_name)
 
     logging.info("\n--- All Training Steps Completed ---")
 
-    # Final logging (optional, as each step is logged)
-    mlflow.log_metric("final_q_table_size", len(master_q_table))
+    tracker.log_metrics({"final_q_table_size": len(master_q_table)})
