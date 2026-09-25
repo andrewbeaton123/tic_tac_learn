@@ -17,15 +17,12 @@ console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(log_formatter)
 root_logger.addHandler(console_handler)
 
-import mlflow
 import yaml
 
 #local imports
 from tic_tac_learn.control.factory import load_config as load_mc_config
 from tic_tac_learn.monte_carlo_learning.flow_control.run_monte_carlo import run_parallel_training
-
-# confiig basics 
-mlflow.set_tracking_uri("http://homelab.mlflow")
+from tic_tac_learn.tracking import create_tracker
 
 
 def load_config(config_path: str) -> dict:
@@ -41,16 +38,16 @@ def main():
     config_path ='tic_tac_learn/config.yml'
     conf = load_mc_config(config_path)
 
-    mlflow.set_experiment(experiment_name=conf.runner.experiment_name)
-    with mlflow.start_run(run_name=conf.runner.run_name) as run:
-        logging.info(f"Configuration loaded for run: {conf.runner.run_name}")
-        logging.info(f"MLflow run started (ID: {run.info.run_id})")
-        
+    logging.info(f"Configuration loaded for run: {conf.runner.run_name}")
+
+    # MlflowTracker, or NullTracker when MLflow is disabled/unreachable
+    tracker = create_tracker(conf.runner)
+    with tracker.start_run():
         # Log all settings
-        mlflow.log_params(conf.raw_config.get("monte_carlo_settings", {}))
+        tracker.log_params(conf.raw_config.get("monte_carlo_settings", {}))
 
         # 4. Execute Training
-        run_parallel_training(conf)
+        run_parallel_training(conf, tracker)
         
         logging.info("Training run finished successfully.")
 

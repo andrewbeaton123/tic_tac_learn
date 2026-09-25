@@ -32,6 +32,8 @@ class RunnerConfig:
     test_games_per_step: int = 1000
     mlflow_tracking_uri: Optional[str] = None
     log_mlflow: bool = True
+    mlflow_on_unavailable: str = "warn"  # "warn" | "fail"
+    mlflow_health_check_timeout: float = 3.0
 
 @dataclass(frozen=True)
 class MonteCarloConfig:

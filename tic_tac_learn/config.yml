@@ -7,7 +7,14 @@ app:
     logs_dir: "logs"
     models_dir: "models"
 
-  
+# Experiment tracking. Training runs without MLflow when log_mlflow is false or the server is unreachable.
+tracking:
+  log_mlflow: true
+  mlflow_tracking_uri: "http://homelab.mlflow"   # falls back to $MLFLOW_TRACKING_URI if unset
+  on_unavailable: warn                           # warn: train without tracking | fail: stop before training
+  health_check_timeout_seconds: 3
+
+
 # Game definitions
 games:
   tic_tac_toe:

@@ -57,20 +57,28 @@ After all worker processes have finished, the main process collects the list of 
 
 Once training is complete the master Q-table is wrapped in a `TicTacToeModel` instance from the [`tic_tac_toe_model`](https://github.com/andrewbeaton123/tic_tac_toe_model) package. This is the shared model contract between this training repo and the serving layer.
 
-The model is saved to disk as a `Q_values.safetensors` artifact before being logged to MLflow. The MLflow run records hyperparameters, training configuration, the model signature, and the safetensors artifact so the model can be reloaded from the registry by any downstream service.
+The model is always saved locally to `models/<experiment>_<run_name>_<timestamp>/Q_values.safetensors`. If MLflow tracking is active, the run also records hyperparameters, per-step metrics, per-step Q-tables, the model signature and the safetensors artifact, so any downstream service can reload the model from the registry.
 
 ```python
 trained_model = TicTacToeModel(master_q_table, hyperparameters, training_config, meta_data)
-trained_model.save(artifact_dir)
-
-mlflow.pyfunc.log_model(
-    artifact_path=model_name,
-    python_model=trained_model,
-    artifacts=trained_model.get_artifact_path(),
-    signature=trained_model.get_model_signature(),
-    input_example=trained_model.get_input_example(),
-)
+trained_model.save(artifact_dir)             # always, under models/
+tracker.log_model(trained_model, model_name)  # no-op when tracking is off
 ```
+
+### 6. Experiment Tracking (optional MLflow)
+
+Training code never calls MLflow directly. It reports through an `ExperimentTracker` (`tic_tac_learn/tracking/`), which is built from the `tracking:` block in `config.yml`:
+
+```yaml
+tracking:
+  log_mlflow: true                             # false = never contact MLflow
+  mlflow_tracking_uri: "http://homelab.mlflow"  # falls back to $MLFLOW_TRACKING_URI
+  on_unavailable: warn                         # warn: train without tracking | fail: stop before training
+  health_check_timeout_seconds: 3
+```
+
+- **Server unreachable at startup:** with `warn`, the run logs one warning and trains without tracking. With `fail`, it stops before training with `MlflowUnavailableError`.
+- **Server lost mid-run:** the first failed tracking call is logged and turns tracking off for the rest of the run. Training still finishes and the model is saved locally.
 
 ## How to Run
 
@@ -78,7 +86,7 @@ mlflow.pyfunc.log_model(
     ```bash
     poetry install
     ```
-2.  **Configure the Run**: Edit the `monte_carlo_settings` in `config.yml` to define your training parameters.
+2.  **Configure the Run**: Edit the `monte_carlo_settings` in `config.yml` to define your training parameters, and the `tracking` block to control MLflow. Set `log_mlflow: false` to run fully offline.
 3.  **Run the Training**: 
     ```bash
     python -m tic_tac_learn.main
