@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import mlflow
 from typing import Optional, Dict, Any

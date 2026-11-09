@@ -1,6 +1,5 @@
 # holds the config manager that will ingest and provide attributes from the config yaml
-
-
+from __future__ import annotations
 import yaml
 import logging
 

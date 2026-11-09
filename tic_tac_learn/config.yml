@@ -1,9 +1,20 @@
 
-# Application settings
 app:
-  current_game: "tic_tac_toe"  # Set the default/current game
-  environment: "development"    # development, testing, production
-  
+  current_game: "tic_tac_toe"
+  environment: "development"
+  paths:
+    q_tables_dir: "q_tables"
+    logs_dir: "logs"
+    models_dir: "models"
+
+# Experiment tracking. Training runs without MLflow when log_mlflow is false or the server is unreachable.
+tracking:
+  log_mlflow: true
+  mlflow_tracking_uri: "http://homelab.mlflow"   # falls back to $MLFLOW_TRACKING_URI if unset
+  on_unavailable: warn                           # warn: train without tracking | fail: stop before training
+  health_check_timeout_seconds: 3
+
+
 # Game definitions
 games:
   tic_tac_toe:
@@ -39,17 +50,17 @@ games:
 
 # Settings for the Monte Carlo run
 monte_carlo_settings:
-  run_name: "Refactor testing from_config - Game change -engine-improvements PR1"
-  total_games: 10000
+  run_name: "Issue 13 - testing small sized run mlflow saving of custom model class"
+  total_games: 200000
   experiment_name: "Tic Tac Dev"
   steps: 10
-  cores: 12
+  cores: 2
   decay: 
     type: LINEAR
     params: 
-      learning_rate_frozen_steps: 5
+      learning_rate_frozen_steps: 2
       learning_rate_scaling: 1 
-      learning_rate_inital: 0.7
+      learning_rate_inital: 1
       learning_rate_min: 0.01
 
   #learning_rate_start: 0.8

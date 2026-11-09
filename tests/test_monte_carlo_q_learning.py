@@ -56,9 +56,10 @@ class TestQTableMerging:
         assert merged[state][3] == pytest.approx(0.4)  # Should keep unique value
 
     @pytest.mark.parametrize("strategy", ["avg"])#["avg", "weighted_avg"])
-    def test_averaging_strategies(self, empty_q_table, strategy):
+    def test_averaging_strategies(self, strategy):
         """Test both averaging strategies produce expected results"""
-        q1, q2 = empty_q_table, empty_q_table
+        # Two independent tables (a single fixture instance would make q1 and q2 the same object)
+        q1, q2 = defaultdict(_create_nested_q_table), defaultdict(_create_nested_q_table)
         state = ("state_value",)
         
         # Setup test data
@@ -69,9 +70,10 @@ class TestQTableMerging:
         
         assert merged[state][1] == pytest.approx(2.0)
 
-    def test_partial_state_action_coverage(self, empty_q_table):
+    def test_partial_state_action_coverage(self):
         """Test merging when state-action pairs aren't present in all tables"""
-        q1, q2 = empty_q_table, empty_q_table
+        # Two independent tables (a single fixture instance would make q1 and q2 the same object)
+        q1, q2 = defaultdict(_create_nested_q_table), defaultdict(_create_nested_q_table)
         state = ("partial_state",)
         
         # Setup asymmetric test data

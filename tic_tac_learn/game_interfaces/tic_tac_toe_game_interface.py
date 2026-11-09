@@ -1,5 +1,5 @@
 # game interface  tic tac toe that follows the game interface ABC
-
+from __future__ import annotations
 import logging 
 from .game_interface_abc import GameInterface
 from .utils  import InvalidPlayerError

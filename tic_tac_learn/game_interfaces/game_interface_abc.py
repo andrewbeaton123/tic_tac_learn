@@ -1,6 +1,7 @@
 # creates the abc class that will be used as a universal game interface
 
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import logging 
 from datetime import datetime

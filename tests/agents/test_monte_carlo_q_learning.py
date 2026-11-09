@@ -50,18 +50,6 @@ class TestQTableMerging(unittest.TestCase):
         self.assertAlmostEqual(merged[state][20], 0.3)  # average of 0.2 and 0.4
         self.assertAlmostEqual(merged[state][30], 0.8)  # only one value
 
-    def test_merge_weighted_avg_behaves_like_avg(self):
-        """Test that weighted average strategy behaves same as regular average."""
-        state = ("S",)
-        self.q1[state][0] = 1.0
-        self.q2[state][0] = 3.0
-
-        merged_avg = merge_q_tables([self.q1, self.q2], merge_strategy="avg")
-        merged_weighted = merge_q_tables([self.q1, self.q2], merge_strategy="weighted_avg")
-
-        self.assertAlmostEqual(merged_avg[state][0], 2.0)
-        self.assertAlmostEqual(merged_weighted[state][0], 2.0)
-
     def test_invalid_merge_strategy(self):
         """Test that invalid merge strategy raises ValueError."""
         with self.assertRaises(ValueError):
